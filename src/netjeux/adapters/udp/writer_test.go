@@ -3,22 +3,26 @@ package udp_test
 import (
 	"netjeux/adapters/udp"
 
+	"fmt"
 	"net"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Reader", func() {
-	It("reads from a UDP port", func() {
-		reader, err := udp.NewReader(51040)
+var _ = Describe("Writer", func() {
+	It("writes to a UDP port", func() {
+		laddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf(":%d", 51041))
+		Expect(err).NotTo(HaveOccurred())
+
+		connection, err := net.ListenUDP("udp4", laddr)
 		Expect(err).NotTo(HaveOccurred())
 
 		messages := make(chan []byte, 100)
 		go func() {
 			messageRead := make([]byte, 1024)
 			for {
-				bytesRead, err := reader.Read(messageRead)
+				bytesRead, err := connection.Read(messageRead)
 				Expect(err).NotTo(HaveOccurred())
 				message := make([]byte, bytesRead)
 				copy(message, messageRead[0:bytesRead])
@@ -26,14 +30,14 @@ var _ = Describe("Reader", func() {
 			}
 		}()
 
-		raddr, err := net.ResolveUDPAddr("udp4", "localhost:51040")
+		raddr, err := net.ResolveUDPAddr("udp4", "localhost:51041")
 		Expect(err).NotTo(HaveOccurred())
 
-		connection, err := net.DialUDP("udp4", nil, raddr)
+		writer, err := udp.NewWriter(raddr)
 		Expect(err).NotTo(HaveOccurred())
 
 		messageSent := []byte("hello")
-		bytesWritten, err := connection.Write(messageSent)
+		bytesWritten, err := writer.Write(messageSent)
 		Expect(err).NotTo(HaveOccurred())
 		Expect(bytesWritten).To(Equal(len(messageSent)))
 

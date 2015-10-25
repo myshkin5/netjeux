@@ -25,7 +25,6 @@ func NewReader(port uint16) (*Reader, error) {
 	}, nil
 }
 
-func (r *Reader) Read(p []byte) (int, error) {
-	bytesRead, _, err := r.connection.ReadFromUDP(p)
-	return bytesRead, err
+func (r *Reader) Read(message []byte) (int, error) {
+	return r.connection.Read(message)
 }
