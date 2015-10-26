@@ -1,10 +1,10 @@
 package simple_test
 
 import (
-	"netjeux/schemes/simple"
+	"netspel/schemes/simple"
 
 	"errors"
-	"netjeux/schemes"
+	"netspel/schemes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

@@ -1,7 +1,7 @@
 package udp_test
 
 import (
-	"netjeux/adapters/udp"
+	"netspel/adapters/udp"
 
 	"fmt"
 	"net"

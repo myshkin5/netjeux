@@ -1,7 +1,7 @@
 package schemes_test
 
 import (
-	"netjeux/schemes"
+	"netspel/schemes"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
