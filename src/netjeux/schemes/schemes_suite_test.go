@@ -1,4 +1,4 @@
-package udp_test
+package schemes_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestUDP(t *testing.T) {
+func TestSchemes(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Adaptors - UDP Suite")
+	RunSpecs(t, "Schemes Suite")
 }

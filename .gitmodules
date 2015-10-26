@@ -4,3 +4,6 @@
 [submodule "src/github.com/onsi/gomega"]
 	path = src/github.com/onsi/gomega
 	url = https://github.com/onsi/gomega
+[submodule "src/github.com/op/go-logging"]
+	path = src/github.com/op/go-logging
+	url = https://github.com/op/go-logging.git
