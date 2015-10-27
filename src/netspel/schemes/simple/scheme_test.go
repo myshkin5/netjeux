@@ -1,10 +1,10 @@
 package simple_test
 
 import (
-	"netspel/schemes/simple"
-
 	"errors"
-	"netspel/schemes"
+
+	"netspel/schemes/internal/mocks"
+	"netspel/schemes/simple"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -12,14 +12,14 @@ import (
 
 var _ = Describe("Scheme", func() {
 	var (
-		writer *schemes.MockWriter
-		reader *schemes.MockReader
+		writer *mocks.MockWriter
+		reader *mocks.MockReader
 		scheme *simple.Scheme
 	)
 
 	BeforeEach(func() {
-		writer = schemes.NewMockWriter()
-		reader = schemes.NewMockReader()
+		writer = mocks.NewMockWriter()
+		reader = mocks.NewMockReader()
 		scheme = simple.New(writer, reader)
 		scheme.DefaultReport = ""
 		scheme.LessThanReport = ""
@@ -40,9 +40,9 @@ var _ = Describe("Scheme", func() {
 	})
 
 	It("reads messages from a reader", func() {
-		reader.ReadMessages <- schemes.ReadMessage{Buffer: make([]byte, 100), Error: nil}
-		reader.ReadMessages <- schemes.ReadMessage{Buffer: make([]byte, 10000), Error: nil}
-		reader.ReadMessages <- schemes.ReadMessage{Buffer: []byte{}, Error: errors.New("Bad stuff")}
+		reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 100), Error: nil}
+		reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 10000), Error: nil}
+		reader.ReadMessages <- mocks.ReadMessage{Buffer: []byte{}, Error: errors.New("Bad stuff")}
 
 		go scheme.RunReader()
 

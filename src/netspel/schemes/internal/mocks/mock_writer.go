@@ -1,4 +1,4 @@
-package schemes
+package mocks
 
 type MockWriter struct {
 	Messages chan []byte

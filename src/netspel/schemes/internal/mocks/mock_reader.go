@@ -1,4 +1,4 @@
-package schemes
+package mocks
 
 type ReadMessage struct {
 	Buffer []byte

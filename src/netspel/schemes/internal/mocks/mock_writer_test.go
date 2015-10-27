@@ -1,7 +1,7 @@
-package schemes_test
+package mocks_test
 
 import (
-	"netspel/schemes"
+	"netspel/schemes/internal/mocks"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -9,7 +9,7 @@ import (
 
 var _ = Describe("MockWriter", func() {
 	It("stores all writes in order", func() {
-		writer := schemes.NewMockWriter()
+		writer := mocks.NewMockWriter()
 
 		message1 := []byte("message 1")
 		bytesWritten, err := writer.Write(message1)

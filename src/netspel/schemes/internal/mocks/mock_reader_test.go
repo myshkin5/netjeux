@@ -1,9 +1,9 @@
-package schemes_test
+package mocks_test
 
 import (
-	"netspel/schemes"
-
 	"errors"
+
+	"netspel/schemes/internal/mocks"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -11,12 +11,12 @@ import (
 
 var _ = Describe("MockReader", func() {
 	It("returns all messages", func() {
-		reader := schemes.NewMockReader()
+		reader := mocks.NewMockReader()
 		message1 := []byte("message 1")
-		reader.ReadMessages <- schemes.ReadMessage{Buffer: message1, Error: nil}
+		reader.ReadMessages <- mocks.ReadMessage{Buffer: message1, Error: nil}
 		message2 := []byte("message 2 - something else")
-		reader.ReadMessages <- schemes.ReadMessage{Buffer: message2, Error: nil}
-		reader.ReadMessages <- schemes.ReadMessage{Buffer: []byte{}, Error: errors.New("Bad stuff")}
+		reader.ReadMessages <- mocks.ReadMessage{Buffer: message2, Error: nil}
+		reader.ReadMessages <- mocks.ReadMessage{Buffer: []byte{}, Error: errors.New("Bad stuff")}
 
 		buffer := make([]byte, 30)
 		bytesRead, err := reader.Read(buffer)

@@ -1,13 +1,13 @@
-package schemes_test
+package mocks_test
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
 func TestSchemes(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Schemes Suite")
+	RunSpecs(t, "Schemes - Internal - Mocks Suite")
 }
