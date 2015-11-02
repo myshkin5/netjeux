@@ -2,11 +2,40 @@ package factory
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 )
 
+var (
+	WriterManager *InstanceManager
+	ReaderManager *InstanceManager
+	SchemeManager *InstanceManager
+)
+
+func init() {
+	WriterManager = NewInstanceManager()
+	ReaderManager = NewInstanceManager()
+	SchemeManager = NewInstanceManager()
+}
+
 type InstanceManager struct {
 	types map[string]reflect.Type
+}
+
+type Writer interface {
+	Init(Config) error
+	io.Writer
+}
+
+type Reader interface {
+	Init(Config) error
+	io.Reader
+}
+
+type Scheme interface {
+	Init(Config) error
+	RunWriter(writer Writer)
+	RunReader(reader Reader)
 }
 
 func NewInstanceManager() *InstanceManager {
@@ -26,4 +55,46 @@ func (m *InstanceManager) CreateInstance(name string) (reflect.Value, error) {
 	}
 
 	return reflect.New(instanceType), nil
+}
+
+func CreateWriter(name string) (Writer, error) {
+	value, err := WriterManager.CreateInstance(name)
+	if err != nil {
+		return nil, err
+	}
+
+	writerValue, ok := value.Interface().(Writer)
+	if !ok {
+		return nil, fmt.Errorf("Type does not implement writer interface, %s", name)
+	}
+
+	return writerValue, nil
+}
+
+func CreateReader(name string) (Reader, error) {
+	value, err := ReaderManager.CreateInstance(name)
+	if err != nil {
+		return nil, err
+	}
+
+	readerValue, ok := value.Interface().(Reader)
+	if !ok {
+		return nil, fmt.Errorf("Type does not implement Reader interface, %s", name)
+	}
+
+	return readerValue, nil
+}
+
+func CreateScheme(name string) (Scheme, error) {
+	value, err := SchemeManager.CreateInstance(name)
+	if err != nil {
+		return nil, err
+	}
+
+	schemeValue, ok := value.Interface().(Scheme)
+	if !ok {
+		return nil, fmt.Errorf("Type does not implement Scheme interface, %s", name)
+	}
+
+	return schemeValue, nil
 }

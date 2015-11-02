@@ -1,5 +1,7 @@
 package mocks
 
+import "netspel/factory"
+
 type ReadMessage struct {
 	Buffer []byte
 	Error  error
@@ -13,6 +15,10 @@ func NewMockReader() *MockReader {
 	return &MockReader{
 		ReadMessages: make(chan ReadMessage, 10000),
 	}
+}
+
+func (m *MockReader) Init(config factory.Config) error {
+	return nil
 }
 
 func (m *MockReader) Read(message []byte) (int, error) {

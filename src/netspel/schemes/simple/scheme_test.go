@@ -3,6 +3,7 @@ package simple_test
 import (
 	"errors"
 
+	"netspel/factory"
 	"netspel/schemes/internal/mocks"
 	"netspel/schemes/simple"
 
@@ -20,14 +21,16 @@ var _ = Describe("Scheme", func() {
 	BeforeEach(func() {
 		writer = mocks.NewMockWriter()
 		reader = mocks.NewMockReader()
-		scheme = simple.New(writer, reader)
+		scheme = &simple.Scheme{}
+		err := scheme.Init(factory.Config{})
+		Expect(err).NotTo(HaveOccurred())
 		scheme.DefaultReport = ""
 		scheme.LessThanReport = ""
 		scheme.ErrorReport = ""
 	})
 
 	It("writes messages to a writer", func() {
-		go scheme.RunWriter()
+		go scheme.RunWriter(writer)
 
 		var sentMessage []byte
 		for i := 0; i < simple.MessagesPerRun; i++ {
@@ -40,13 +43,13 @@ var _ = Describe("Scheme", func() {
 	})
 
 	It("reads messages from a reader", func() {
-		reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 100), Error: nil}
-		reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 10000), Error: nil}
+		reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 10), Error: nil}
+		reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 1000), Error: nil}
 		reader.ReadMessages <- mocks.ReadMessage{Buffer: []byte{}, Error: errors.New("Bad stuff")}
 
-		go scheme.RunReader()
+		go scheme.RunReader(reader)
 
-		Eventually(scheme.ByteCount).Should(BeEquivalentTo(10100))
+		Eventually(scheme.ByteCount).Should(BeEquivalentTo(1010))
 		Eventually(scheme.ErrorCount).Should(BeEquivalentTo(1))
 	})
 })

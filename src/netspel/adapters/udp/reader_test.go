@@ -2,6 +2,7 @@ package udp_test
 
 import (
 	"netspel/adapters/udp"
+	"netspel/factory"
 
 	"net"
 
@@ -11,7 +12,11 @@ import (
 
 var _ = Describe("Reader", func() {
 	It("reads from a UDP port", func() {
-		reader, err := udp.NewReader(51040)
+		config := factory.NewConfig()
+		config.Additional[udp.Port] = 51040
+
+		reader := udp.Reader{}
+		err := reader.Init(*config)
 		Expect(err).NotTo(HaveOccurred())
 
 		messages := make(chan []byte, 100)

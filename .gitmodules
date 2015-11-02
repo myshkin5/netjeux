@@ -7,3 +7,6 @@
 [submodule "src/github.com/op/go-logging"]
 	path = src/github.com/op/go-logging
 	url = https://github.com/op/go-logging.git
+[submodule "src/github.com/codegangsta/cli"]
+	path = src/github.com/codegangsta/cli
+	url = https://github.com/codegangsta/cli.git

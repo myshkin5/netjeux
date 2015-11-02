@@ -1,20 +1,44 @@
 package udp
 
-import "net"
+import (
+	"fmt"
+	"net"
+	"strconv"
+
+	"netspel/factory"
+)
+
+const (
+	RemoteAddr = "remote-addr"
+	Port       = "port"
+)
 
 type Writer struct {
 	connection *net.UDPConn
 }
 
-func NewWriter(raddr *net.UDPAddr) (*Writer, error) {
-	connection, err := net.DialUDP("udp4", nil, raddr)
-	if err != nil {
-		return nil, err
+func (w *Writer) Init(config factory.Config) error {
+	remoteAddr, ok := config.AdditionalString(RemoteAddr)
+	if !ok {
+		return fmt.Errorf("%s must be specified in the config additional section", RemoteAddr)
 	}
 
-	return &Writer{
-		connection: connection,
-	}, nil
+	port, ok := config.AdditionalInt(Port)
+	if !ok {
+		return fmt.Errorf("%s must be specified in the config additional section", Port)
+	}
+
+	raddr, err := net.ResolveUDPAddr("udp4", net.JoinHostPort(remoteAddr, strconv.Itoa(port)))
+	if err != nil {
+		return err
+	}
+
+	w.connection, err = net.DialUDP("udp4", nil, raddr)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (w *Writer) Write(message []byte) (int, error) {

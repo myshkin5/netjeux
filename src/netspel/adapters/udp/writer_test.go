@@ -2,6 +2,7 @@ package udp_test
 
 import (
 	"netspel/adapters/udp"
+	"netspel/factory"
 
 	"fmt"
 	"net"
@@ -30,10 +31,12 @@ var _ = Describe("Writer", func() {
 			}
 		}()
 
-		raddr, err := net.ResolveUDPAddr("udp4", "localhost:51041")
-		Expect(err).NotTo(HaveOccurred())
+		config := factory.NewConfig()
+		config.Additional[udp.Port] = 51041
+		config.Additional[udp.RemoteAddr] = "localhost"
 
-		writer, err := udp.NewWriter(raddr)
+		writer := udp.Writer{}
+		err = writer.Init(*config)
 		Expect(err).NotTo(HaveOccurred())
 
 		messageSent := []byte("hello")

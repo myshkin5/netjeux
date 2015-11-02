@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd $(dirname $0)/../src/netspel
+
+goimports -w .
+ginkgo -r -keepGoing -race
