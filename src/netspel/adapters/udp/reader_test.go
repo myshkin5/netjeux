@@ -13,7 +13,7 @@ import (
 var _ = Describe("Reader", func() {
 	It("reads from a UDP port", func() {
 		config := factory.NewConfig()
-		config.Additional[udp.Port] = 51040
+		config.ParseAndSetAdditionalInt(udp.Port + "=51040")
 
 		reader := udp.Reader{}
 		err := reader.Init(*config)

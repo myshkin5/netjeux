@@ -22,23 +22,31 @@ var _ = Describe("Scheme", func() {
 		writer = mocks.NewMockWriter()
 		reader = mocks.NewMockReader()
 		scheme = &simple.Scheme{}
-		err := scheme.Init(factory.Config{})
+		config := factory.NewConfig()
+		err := config.ParseAndSetAdditionalString(simple.DefaultReport + "=")
 		Expect(err).NotTo(HaveOccurred())
-		scheme.DefaultReport = ""
-		scheme.LessThanReport = ""
-		scheme.ErrorReport = ""
+		err = config.ParseAndSetAdditionalString(simple.LessThanReport + "=")
+		Expect(err).NotTo(HaveOccurred())
+		err = config.ParseAndSetAdditionalString(simple.ErrorReport + "=")
+		Expect(err).NotTo(HaveOccurred())
+		err = config.ParseAndSetAdditionalInt(simple.MessagesPerRun + "=100")
+		Expect(err).NotTo(HaveOccurred())
+		err = config.ParseAndSetAdditionalInt(simple.BytesPerMessage + "=1000")
+		Expect(err).NotTo(HaveOccurred())
+		err = scheme.Init(*config)
+		Expect(err).NotTo(HaveOccurred())
 	})
 
 	It("writes messages to a writer", func() {
 		go scheme.RunWriter(writer)
 
 		var sentMessage []byte
-		for i := 0; i < simple.MessagesPerRun; i++ {
+		for i := 0; i < 100; i++ {
 			Eventually(writer.Messages).Should(Receive(&sentMessage))
-			Expect(sentMessage).To(HaveLen(simple.BytesPerMessage))
+			Expect(sentMessage).To(HaveLen(1000))
 		}
 
-		Expect(scheme.ByteCount()).To(BeEquivalentTo(simple.MessagesPerRun * simple.BytesPerMessage))
+		Expect(scheme.ByteCount()).To(BeEquivalentTo(100 * 1000))
 		Expect(scheme.ErrorCount()).To(BeZero())
 	})
 

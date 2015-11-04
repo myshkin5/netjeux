@@ -1,14 +1,23 @@
 package simple
 
 import (
+	"fmt"
 	"sync/atomic"
 
 	"netspel/factory"
 )
 
 const (
-	MessagesPerRun  = 10000
-	BytesPerMessage = 1000
+	prefix = "simple."
+
+	MessagesPerRun  = prefix + "messages-per-run"
+	BytesPerMessage = prefix + "bytes-per-message"
+
+	reportPrefix = prefix + "report-flags."
+
+	DefaultReport  = reportPrefix + "default"
+	LessThanReport = reportPrefix + "less-than"
+	ErrorReport    = reportPrefix + "error"
 )
 
 type Scheme struct {
@@ -16,17 +25,39 @@ type Scheme struct {
 	byteCount  uint64
 	errorCount uint32
 
-	DefaultReport  string
-	LessThanReport string
-	ErrorReport    string
+	bytesPerMessage int
+	messagesPerRun  int
+
+	defaultReport  string
+	lessThanReport string
+	errorReport    string
 }
 
 func (s *Scheme) Init(config factory.Config) error {
-	s.buffer = make([]byte, BytesPerMessage)
+	var ok bool
+	s.bytesPerMessage, ok = config.AdditionalInt(BytesPerMessage)
+	if !ok {
+		return fmt.Errorf("%s must be specified in the config additional section", BytesPerMessage)
+	}
+	s.buffer = make([]byte, s.bytesPerMessage)
 
-	s.DefaultReport = "."
-	s.LessThanReport = "<"
-	s.ErrorReport = "#"
+	s.messagesPerRun, ok = config.AdditionalInt(MessagesPerRun)
+	if !ok {
+		return fmt.Errorf("%s must be specified in the config additional section", MessagesPerRun)
+	}
+
+	s.defaultReport, ok = config.AdditionalString(DefaultReport)
+	if !ok {
+		s.defaultReport = "."
+	}
+	s.lessThanReport, ok = config.AdditionalString(LessThanReport)
+	if !ok {
+		s.lessThanReport = "<"
+	}
+	s.errorReport, ok = config.AdditionalString(ErrorReport)
+	if !ok {
+		s.errorReport = "#"
+	}
 
 	return nil
 }
@@ -40,13 +71,13 @@ func (s *Scheme) ErrorCount() uint32 {
 }
 
 func (s *Scheme) RunWriter(writer factory.Writer) {
-	for i := 0; i < MessagesPerRun; i++ {
+	for i := 0; i < s.messagesPerRun; i++ {
 		s.countMessage(writer.Write(s.buffer))
 	}
 }
 
 func (s *Scheme) RunReader(reader factory.Reader) {
-	buffer := make([]byte, BytesPerMessage)
+	buffer := make([]byte, s.bytesPerMessage)
 	for {
 		s.countMessage(reader.Read(buffer))
 	}
@@ -59,10 +90,10 @@ func (s *Scheme) countMessage(bytes int, err error) {
 	}
 	switch {
 	case err != nil:
-		print(s.ErrorReport)
-	case bytes < BytesPerMessage:
-		print(s.LessThanReport)
+		print(s.errorReport)
+	case bytes < s.bytesPerMessage:
+		print(s.lessThanReport)
 	default:
-		print(s.DefaultReport)
+		print(s.defaultReport)
 	}
 }

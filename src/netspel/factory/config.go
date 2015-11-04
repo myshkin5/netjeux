@@ -23,7 +23,7 @@ func NewConfig() *Config {
 }
 
 func (c Config) AdditionalString(key string) (string, bool) {
-	value, ok := c.Additional[key]
+	value, ok := findElement(c.Additional, key)
 	if !ok {
 		return "", false
 	}
@@ -42,23 +42,28 @@ func (c *Config) ParseAndSetAdditionalString(assignment string) error {
 		return err
 	}
 
-	c.Additional[keyValue[0]] = keyValue[1]
+	value, lastKey := findParent(c.Additional, keyValue[0])
+	value[lastKey] = keyValue[1]
 
 	return nil
 }
 
 func (c Config) AdditionalInt(key string) (int, bool) {
-	value, ok := c.Additional[key]
+	value, ok := findElement(c.Additional, key)
 	if !ok {
 		return 0, false
 	}
 
-	intValue, ok := value.(int)
-	if !ok {
+	switch value := value.(type) {
+	case float64:
+		// Parsed values are of value float64
+		return int(value), true
+	case int:
+		// Set values may be of type int
+		return value, true
+	default:
 		return 0, false
 	}
-
-	return intValue, true
 }
 
 func (c *Config) ParseAndSetAdditionalInt(assignment string) error {
@@ -67,12 +72,13 @@ func (c *Config) ParseAndSetAdditionalInt(assignment string) error {
 		return err
 	}
 
-	value, err := strconv.Atoi(keyValue[1])
+	intValue, err := strconv.Atoi(keyValue[1])
 	if err != nil {
 		return err
 	}
 
-	c.Additional[keyValue[0]] = value
+	value, lastKey := findParent(c.Additional, keyValue[0])
+	value[lastKey] = intValue
 
 	return nil
 }
@@ -108,6 +114,55 @@ func Parse(buffer []byte) (Config, error) {
 	}
 
 	return config, nil
+}
+
+func findElement(parent map[string]interface{}, dotPath string) (interface{}, bool) {
+	keys := strings.Split(dotPath, ".")
+
+	var value interface{}
+	for i, key := range keys {
+		var ok bool
+		value, ok = parent[key]
+		if !ok {
+			return nil, false
+		}
+
+		if i+1 < len(keys) {
+			parent, ok = value.(map[string]interface{})
+			if !ok {
+				return nil, false
+			}
+		}
+	}
+
+	return value, true
+}
+
+func findParent(parent map[string]interface{}, dotPath string) (map[string]interface{}, string) {
+	keys := strings.Split(dotPath, ".")
+	if len(keys) == 1 {
+		return parent, keys[0]
+	}
+	lastKey := keys[len(keys)-1]
+	keys = keys[0 : len(keys)-1]
+
+	value := parent
+	for _, key := range keys {
+		var ok bool
+		child, ok := value[key]
+		if !ok {
+			child = make(map[string]interface{})
+			value[key] = child
+		}
+
+		value, ok = child.(map[string]interface{})
+		if !ok {
+			newValue := make(map[string]interface{})
+			value[key] = newValue
+		}
+	}
+
+	return value, lastKey
 }
 
 func parseAdditionalValue(assignment string) ([]string, error) {

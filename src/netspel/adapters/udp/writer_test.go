@@ -32,8 +32,8 @@ var _ = Describe("Writer", func() {
 		}()
 
 		config := factory.NewConfig()
-		config.Additional[udp.Port] = 51041
-		config.Additional[udp.RemoteAddr] = "localhost"
+		config.ParseAndSetAdditionalInt(udp.Port + "=51041")
+		config.ParseAndSetAdditionalString(udp.RemoteAddr + "=localhost")
 
 		writer := udp.Writer{}
 		err = writer.Init(*config)

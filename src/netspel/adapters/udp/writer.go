@@ -9,8 +9,10 @@ import (
 )
 
 const (
-	RemoteAddr = "remote-addr"
-	Port       = "port"
+	prefix = "udp."
+
+	RemoteAddr = prefix + "remote-addr"
+	Port       = prefix + "port"
 )
 
 type Writer struct {

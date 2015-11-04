@@ -97,6 +97,25 @@ var _ = Describe("Config", func() {
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal("that's really there"))
 		})
+
+		It("returns a child value", func() {
+			config, err := factory.Parse([]byte(`{
+				"writer-type": "SomeNeatWriter",
+				"reader-type": "SomeNeatReader",
+				"scheme-type": "SomeNeatScheme",
+				"additional": {
+					"parent": {
+						"child": "value"
+					}
+				}
+			}`))
+
+			Expect(err).NotTo(HaveOccurred())
+
+			value, ok := config.AdditionalString("parent.child")
+			Expect(ok).To(BeTrue())
+			Expect(value).To(Equal("value"))
+		})
 	})
 
 	Describe("AdditionalInt()", func() {
@@ -125,6 +144,25 @@ var _ = Describe("Config", func() {
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal(1234))
 		})
+
+		It("returns a child value", func() {
+			config, err := factory.Parse([]byte(`{
+				"writer-type": "SomeNeatWriter",
+				"reader-type": "SomeNeatReader",
+				"scheme-type": "SomeNeatScheme",
+				"additional": {
+					"parent": {
+						"child": 98765
+					}
+				}
+			}`))
+
+			Expect(err).NotTo(HaveOccurred())
+
+			value, ok := config.AdditionalInt("parent.child")
+			Expect(ok).To(BeTrue())
+			Expect(value).To(Equal(98765))
+		})
 	})
 
 	Describe("ParseAndSetAdditionalString()", func() {
@@ -134,7 +172,10 @@ var _ = Describe("Config", func() {
 				"reader-type": "SomeNeatReader",
 				"scheme-type": "SomeNeatScheme",
 				"additional": {
-					"this": "that"
+					"this": "that",
+					"parent": {
+						"child": "value"
+					}
 				}
 			}`))
 
@@ -146,6 +187,13 @@ var _ = Describe("Config", func() {
 			value, ok := config.AdditionalString("this")
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal("something else"))
+
+			err = config.ParseAndSetAdditionalString("parent.child=new value")
+			Expect(err).NotTo(HaveOccurred())
+
+			value, ok = config.AdditionalString("parent.child")
+			Expect(ok).To(BeTrue())
+			Expect(value).To(Equal("new value"))
 		})
 
 		It("returns an error if there isn't exactly one equals sign", func() {
@@ -169,6 +217,33 @@ var _ = Describe("Config", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
+		It("can set a string to empty string", func() {
+			config := factory.NewConfig()
+			err := config.ParseAndSetAdditionalString("value=something")
+			Expect(err).NotTo(HaveOccurred())
+			err = config.ParseAndSetAdditionalString("value=")
+			Expect(err).NotTo(HaveOccurred())
+
+			value, ok := config.AdditionalString("value")
+			Expect(ok).To(BeTrue())
+			Expect(value).To(Equal(""))
+
+			err = config.ParseAndSetAdditionalString("another=")
+			Expect(err).NotTo(HaveOccurred())
+
+			another, ok := config.AdditionalString("another")
+			Expect(ok).To(BeTrue())
+			Expect(another).To(Equal(""))
+		})
+
+		It("can set values multiple levels deep", func() {
+			config := factory.NewConfig()
+			err := config.ParseAndSetAdditionalString("one.two.three=hi")
+			Expect(err).NotTo(HaveOccurred())
+			value, ok := config.AdditionalString("one.two.three")
+			Expect(ok).To(BeTrue())
+			Expect(value).To(Equal("hi"))
+		})
 	})
 
 	Describe("ParseAndSetAdditionalInt()", func() {
@@ -178,7 +253,10 @@ var _ = Describe("Config", func() {
 				"reader-type": "SomeNeatReader",
 				"scheme-type": "SomeNeatScheme",
 				"additional": {
-					"this": "that"
+					"this": "that",
+					"parent": {
+						"child": 98765
+					}
 				}
 			}`))
 
@@ -190,6 +268,13 @@ var _ = Describe("Config", func() {
 			value, ok := config.AdditionalInt("this")
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal(1000000))
+
+			err = config.ParseAndSetAdditionalInt("parent.child=12345")
+			Expect(err).NotTo(HaveOccurred())
+
+			value, ok = config.AdditionalInt("parent.child")
+			Expect(ok).To(BeTrue())
+			Expect(value).To(Equal(12345))
 		})
 
 		It("returns an error if there isn't exactly one equals sign or if the value isn't an int", func() {
