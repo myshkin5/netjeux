@@ -29,6 +29,8 @@ var _ = Describe("Scheme", func() {
 		Expect(err).NotTo(HaveOccurred())
 		err = config.ParseAndSetAdditionalString(simple.ErrorReport + "=")
 		Expect(err).NotTo(HaveOccurred())
+		err = config.ParseAndSetAdditionalString(simple.GreaterThanReport + "=")
+		Expect(err).NotTo(HaveOccurred())
 		err = config.ParseAndSetAdditionalInt(simple.MessagesPerRun + "=100")
 		Expect(err).NotTo(HaveOccurred())
 		err = config.ParseAndSetAdditionalInt(simple.BytesPerMessage + "=1000")
@@ -59,5 +61,14 @@ var _ = Describe("Scheme", func() {
 
 		Eventually(scheme.ByteCount).Should(BeEquivalentTo(1010))
 		Eventually(scheme.ErrorCount).Should(BeEquivalentTo(1))
+	})
+
+	It("can read upto twice the size message as it is expected to read", func() {
+		reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 2000), Error: nil}
+
+		go scheme.RunReader(reader)
+
+		Eventually(scheme.ByteCount).Should(BeEquivalentTo(2000))
+		Eventually(scheme.ErrorCount).Should(BeEquivalentTo(0))
 	})
 })

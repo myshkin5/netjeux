@@ -15,9 +15,10 @@ const (
 
 	reportPrefix = prefix + "report-flags."
 
-	DefaultReport  = reportPrefix + "default"
-	LessThanReport = reportPrefix + "less-than"
-	ErrorReport    = reportPrefix + "error"
+	DefaultReport     = reportPrefix + "default"
+	LessThanReport    = reportPrefix + "less-than"
+	ErrorReport       = reportPrefix + "error"
+	GreaterThanReport = reportPrefix + "greater-than"
 )
 
 type Scheme struct {
@@ -28,9 +29,10 @@ type Scheme struct {
 	bytesPerMessage int
 	messagesPerRun  int
 
-	defaultReport  string
-	lessThanReport string
-	errorReport    string
+	defaultReport     string
+	lessThanReport    string
+	errorReport       string
+	greaterThanReport string
 }
 
 func (s *Scheme) Init(config factory.Config) error {
@@ -58,6 +60,10 @@ func (s *Scheme) Init(config factory.Config) error {
 	if !ok {
 		s.errorReport = "#"
 	}
+	s.greaterThanReport, ok = config.AdditionalString(GreaterThanReport)
+	if !ok {
+		s.greaterThanReport = ">"
+	}
 
 	return nil
 }
@@ -77,7 +83,7 @@ func (s *Scheme) RunWriter(writer factory.Writer) {
 }
 
 func (s *Scheme) RunReader(reader factory.Reader) {
-	buffer := make([]byte, s.bytesPerMessage)
+	buffer := make([]byte, s.bytesPerMessage*2)
 	for {
 		s.countMessage(reader.Read(buffer))
 	}
@@ -93,6 +99,8 @@ func (s *Scheme) countMessage(bytes int, err error) {
 		print(s.errorReport)
 	case bytes < s.bytesPerMessage:
 		print(s.lessThanReport)
+	case bytes > s.bytesPerMessage:
+		print(s.greaterThanReport)
 	default:
 		print(s.defaultReport)
 	}
