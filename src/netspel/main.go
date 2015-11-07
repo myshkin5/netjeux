@@ -7,6 +7,11 @@ import (
 	"netspel/factory"
 	"netspel/schemes/simple"
 
+	"fmt"
+	"netspel/json"
+	"strconv"
+	"strings"
+
 	"github.com/codegangsta/cli"
 )
 
@@ -66,7 +71,7 @@ func write(context *cli.Context) {
 		panic(err)
 	}
 
-	err = writer.Init(config)
+	err = writer.Init(config.Additional)
 	if err != nil {
 		panic(err)
 	}
@@ -83,7 +88,7 @@ func read(context *cli.Context) {
 		panic(err)
 	}
 
-	err = reader.Init(config)
+	err = reader.Init(config.Additional)
 	if err != nil {
 		panic(err)
 	}
@@ -99,10 +104,25 @@ func config(context *cli.Context) factory.Config {
 	}
 
 	for _, assignment := range context.GlobalStringSlice("config-string") {
-		config.ParseAndSetAdditionalString(assignment)
+		keyValue, err := parseAssignment(assignment)
+		if err != nil {
+			panic(err)
+		}
+
+		json.SetString(keyValue[0], keyValue[1], config.Additional)
 	}
 	for _, assignment := range context.GlobalStringSlice("config-int") {
-		config.ParseAndSetAdditionalInt(assignment)
+		keyValue, err := parseAssignment(assignment)
+		if err != nil {
+			panic(err)
+		}
+
+		value, err := strconv.Atoi(keyValue[1])
+		if err != nil {
+			panic(err)
+		}
+
+		json.SetInt(keyValue[0], value, config.Additional)
 	}
 
 	return config
@@ -114,10 +134,19 @@ func scheme(config factory.Config, context *cli.Context) factory.Scheme {
 		panic(err)
 	}
 
-	err = scheme.Init(config)
+	err = scheme.Init(config.Additional)
 	if err != nil {
 		panic(err)
 	}
 
 	return scheme
+}
+
+func parseAssignment(assignment string) ([]string, error) {
+	keyValue := strings.Split(assignment, "=")
+	if len(keyValue) != 2 {
+		return []string{}, fmt.Errorf("Values must be of the form <key>=<value>, %s", assignment)
+	}
+
+	return keyValue, nil
 }

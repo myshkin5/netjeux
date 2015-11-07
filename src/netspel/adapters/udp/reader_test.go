@@ -8,6 +8,8 @@ import (
 	"net"
 	"time"
 
+	"netspel/json"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -23,11 +25,11 @@ var _ = Describe("Reader", func() {
 			port = 51010
 		}
 		port++
-		config := factory.NewConfig()
-		config.ParseAndSetAdditionalInt(fmt.Sprintf("%s=%d", udp.Port, port))
+		config := make(map[string]interface{})
+		json.SetInt(udp.Port, port, config)
 
 		reader = udp.Reader{}
-		err := reader.Init(*config)
+		err := reader.Init(config)
 		Expect(err).NotTo(HaveOccurred())
 	})
 

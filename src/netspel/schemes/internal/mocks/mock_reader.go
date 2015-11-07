@@ -17,7 +17,7 @@ func NewMockReader() *MockReader {
 	}
 }
 
-func (m *MockReader) Init(config factory.Config) error {
+func (m *MockReader) Init(config map[string]interface{}) error {
 	return nil
 }
 

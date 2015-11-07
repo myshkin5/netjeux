@@ -1,11 +1,11 @@
 package udp_test
 
 import (
-	"netspel/adapters/udp"
-	"netspel/factory"
-
 	"fmt"
 	"net"
+
+	"netspel/adapters/udp"
+	"netspel/json"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,12 +31,12 @@ var _ = Describe("Writer", func() {
 			}
 		}()
 
-		config := factory.NewConfig()
-		config.ParseAndSetAdditionalInt(udp.Port + "=51041")
-		config.ParseAndSetAdditionalString(udp.RemoteAddr + "=localhost")
+		config := make(map[string]interface{})
+		json.SetInt(udp.Port, 51041, config)
+		json.SetString(udp.RemoteAddr, "localhost", config)
 
 		writer := udp.Writer{}
-		err = writer.Init(*config)
+		err = writer.Init(config)
 		Expect(err).NotTo(HaveOccurred())
 
 		messageSent := []byte("hello")

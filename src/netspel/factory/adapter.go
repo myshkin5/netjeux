@@ -10,12 +10,12 @@ var (
 )
 
 type Writer interface {
-	Init(Config) error
+	Init(config map[string]interface{}) error
 	io.Writer
 }
 
 type Reader interface {
-	Init(Config) error
+	Init(config map[string]interface{}) error
 	Stop()
 	io.Reader
 }

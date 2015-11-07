@@ -1,7 +1,5 @@
 package mocks
 
-import "netspel/factory"
-
 type MockWriter struct {
 	Messages chan []byte
 }
@@ -12,7 +10,7 @@ func NewMockWriter() *MockWriter {
 	}
 }
 
-func (m *MockWriter) Init(config factory.Config) error {
+func (m *MockWriter) Init(config map[string]interface{}) error {
 	return nil
 }
 

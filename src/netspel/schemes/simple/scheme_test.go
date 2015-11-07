@@ -1,13 +1,14 @@
 package simple_test
 
 import (
-	"netspel/factory"
 	"netspel/schemes/internal/mocks"
 	"netspel/schemes/simple"
 
 	"errors"
 	"sync"
 	"time"
+
+	"netspel/json"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -18,35 +19,27 @@ var _ = Describe("Scheme", func() {
 		writer *mocks.MockWriter
 		reader *mocks.MockReader
 		scheme *simple.Scheme
-		config *factory.Config
+		config map[string]interface{}
 	)
 
 	BeforeEach(func() {
 		writer = mocks.NewMockWriter()
 		reader = mocks.NewMockReader()
 		scheme = &simple.Scheme{}
-		config = factory.NewConfig()
-		err := config.ParseAndSetAdditionalInt(simple.MessagesPerRun + "=100")
-		Expect(err).NotTo(HaveOccurred())
-		err = config.ParseAndSetAdditionalInt(simple.BytesPerMessage + "=1000")
-		Expect(err).NotTo(HaveOccurred())
-		err = config.ParseAndSetAdditionalString(simple.WaitForLastMessage + "=100ms")
-		Expect(err).NotTo(HaveOccurred())
-		err = config.ParseAndSetAdditionalString(simple.DefaultReport + "=")
-		Expect(err).NotTo(HaveOccurred())
-		err = config.ParseAndSetAdditionalString(simple.LessThanReport + "=")
-		Expect(err).NotTo(HaveOccurred())
-		err = config.ParseAndSetAdditionalString(simple.ErrorReport + "=")
-		Expect(err).NotTo(HaveOccurred())
-		err = config.ParseAndSetAdditionalString(simple.GreaterThanReport + "=")
-		Expect(err).NotTo(HaveOccurred())
+		config = make(map[string]interface{})
+		json.SetInt(simple.MessagesPerRun, 100, config)
+		json.SetInt(simple.BytesPerMessage, 1000, config)
+		json.SetString(simple.WaitForLastMessage, "100ms", config)
+		json.SetString(simple.DefaultReport, "", config)
+		json.SetString(simple.LessThanReport, "", config)
+		json.SetString(simple.ErrorReport, "", config)
+		json.SetString(simple.GreaterThanReport, "", config)
 	})
 
 	Context("with a short wait time", func() {
 		JustBeforeEach(func() {
-			err := config.ParseAndSetAdditionalString(simple.WaitForLastMessage + "=100ms")
-			Expect(err).NotTo(HaveOccurred())
-			err = scheme.Init(*config)
+			json.SetString(simple.WaitForLastMessage, "100ms", config)
+			err := scheme.Init(config)
 			Expect(err).NotTo(HaveOccurred())
 		})
 
@@ -95,9 +88,8 @@ var _ = Describe("Scheme", func() {
 
 	Context("with a longer wait time", func() {
 		JustBeforeEach(func() {
-			err := config.ParseAndSetAdditionalString(simple.WaitForLastMessage + "=1s")
-			Expect(err).NotTo(HaveOccurred())
-			err = scheme.Init(*config)
+			json.SetString(simple.WaitForLastMessage, "1s", config)
+			err := scheme.Init(config)
 			Expect(err).NotTo(HaveOccurred())
 		})
 

@@ -2,11 +2,12 @@ package simple
 
 import (
 	"fmt"
+	"sync"
 	"sync/atomic"
+	"time"
 
 	"netspel/factory"
-	"sync"
-	"time"
+	"netspel/json"
 )
 
 const (
@@ -40,20 +41,20 @@ type Scheme struct {
 	greaterThanReport string
 }
 
-func (s *Scheme) Init(config factory.Config) error {
+func (s *Scheme) Init(config map[string]interface{}) error {
 	var ok bool
-	s.bytesPerMessage, ok = config.AdditionalInt(BytesPerMessage)
+	s.bytesPerMessage, ok = json.Int(BytesPerMessage, config)
 	if !ok {
 		return fmt.Errorf("%s must be specified in the config additional section", BytesPerMessage)
 	}
 	s.buffer = make([]byte, s.bytesPerMessage)
 
-	s.messagesPerRun, ok = config.AdditionalInt(MessagesPerRun)
+	s.messagesPerRun, ok = json.Int(MessagesPerRun, config)
 	if !ok {
 		return fmt.Errorf("%s must be specified in the config additional section", MessagesPerRun)
 	}
 
-	wait, ok := config.AdditionalString(WaitForLastMessage)
+	wait, ok := json.String(WaitForLastMessage, config)
 	if !ok {
 		wait = "5s"
 	}
@@ -63,19 +64,19 @@ func (s *Scheme) Init(config factory.Config) error {
 		return err
 	}
 
-	s.defaultReport, ok = config.AdditionalString(DefaultReport)
+	s.defaultReport, ok = json.String(DefaultReport, config)
 	if !ok {
 		s.defaultReport = "."
 	}
-	s.lessThanReport, ok = config.AdditionalString(LessThanReport)
+	s.lessThanReport, ok = json.String(LessThanReport, config)
 	if !ok {
 		s.lessThanReport = "<"
 	}
-	s.errorReport, ok = config.AdditionalString(ErrorReport)
+	s.errorReport, ok = json.String(ErrorReport, config)
 	if !ok {
 		s.errorReport = "#"
 	}
-	s.greaterThanReport, ok = config.AdditionalString(GreaterThanReport)
+	s.greaterThanReport, ok = json.String(GreaterThanReport, config)
 	if !ok {
 		s.greaterThanReport = ">"
 	}

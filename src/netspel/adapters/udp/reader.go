@@ -5,14 +5,15 @@ import (
 	"net"
 
 	"netspel/factory"
+	"netspel/json"
 )
 
 type Reader struct {
 	connection *net.UDPConn
 }
 
-func (r *Reader) Init(config factory.Config) error {
-	port, ok := config.AdditionalInt(Port)
+func (r *Reader) Init(config map[string]interface{}) error {
+	port, ok := json.Int(Port, config)
 	if !ok {
 		return fmt.Errorf("%s must be specified in the config additional section", Port)
 	}

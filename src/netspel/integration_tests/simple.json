@@ -1,0 +1,15 @@
+{
+  "scheme-type": "netspel.schemes.simple.Scheme",
+  "writer-type": "netspel.adapters.udp.Writer",
+  "reader-type": "netspel.adapters.udp.Reader",
+  "additional": {
+    "simple": {
+      "bytes-per-message": 10000,
+      "messages-per-run": 1000
+    },
+    "udp": {
+      "port": 46354,
+      "remote-addr": "localhost"
+    }
+  }
+}
