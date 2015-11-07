@@ -33,3 +33,7 @@ func (m *MockReader) Read(message []byte) (int, error) {
 	}
 	return bytesRead, readMessage.Error
 }
+
+func (m *MockReader) Stop() {
+	m.ReadMessages <- ReadMessage{Buffer: []byte{}, Error: factory.ErrReaderClosed}
+}

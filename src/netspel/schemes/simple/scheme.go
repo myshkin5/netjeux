@@ -5,13 +5,16 @@ import (
 	"sync/atomic"
 
 	"netspel/factory"
+	"sync"
+	"time"
 )
 
 const (
 	prefix = "simple."
 
-	MessagesPerRun  = prefix + "messages-per-run"
-	BytesPerMessage = prefix + "bytes-per-message"
+	MessagesPerRun     = prefix + "messages-per-run"
+	BytesPerMessage    = prefix + "bytes-per-message"
+	WaitForLastMessage = prefix + "wait-for-last-message"
 
 	reportPrefix = prefix + "report-flags."
 
@@ -25,9 +28,11 @@ type Scheme struct {
 	buffer     []byte
 	byteCount  uint64
 	errorCount uint32
+	runtime    time.Duration
 
-	bytesPerMessage int
-	messagesPerRun  int
+	bytesPerMessage    int
+	messagesPerRun     int
+	waitForLastMessage time.Duration
 
 	defaultReport     string
 	lessThanReport    string
@@ -46,6 +51,16 @@ func (s *Scheme) Init(config factory.Config) error {
 	s.messagesPerRun, ok = config.AdditionalInt(MessagesPerRun)
 	if !ok {
 		return fmt.Errorf("%s must be specified in the config additional section", MessagesPerRun)
+	}
+
+	wait, ok := config.AdditionalString(WaitForLastMessage)
+	if !ok {
+		wait = "5s"
+	}
+	var err error
+	s.waitForLastMessage, err = time.ParseDuration(wait)
+	if err != nil {
+		return err
 	}
 
 	s.defaultReport, ok = config.AdditionalString(DefaultReport)
@@ -76,30 +91,67 @@ func (s *Scheme) ErrorCount() uint32 {
 	return atomic.LoadUint32(&s.errorCount)
 }
 
+func (s *Scheme) Runtime() time.Duration {
+	return s.runtime
+}
+
 func (s *Scheme) RunWriter(writer factory.Writer) {
+	startTime := time.Now()
 	for i := 0; i < s.messagesPerRun; i++ {
 		s.countMessage(writer.Write(s.buffer))
 	}
+	s.runtime = time.Now().Sub(startTime)
 }
 
 func (s *Scheme) RunReader(reader factory.Reader) {
-	buffer := make([]byte, s.bytesPerMessage*2)
-	for {
-		s.countMessage(reader.Read(buffer))
-	}
+	timer := time.NewTimer(time.Duration(1<<63 - 1))
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		s.runReader(reader, timer)
+	}()
+
+	<-timer.C
+
+	reader.Stop()
+
+	wg.Wait()
 }
 
-func (s *Scheme) countMessage(bytes int, err error) {
-	atomic.AddUint64(&s.byteCount, uint64(bytes))
+func (s *Scheme) runReader(reader factory.Reader, timer *time.Timer) {
+	var startTime time.Time
+	buffer := make([]byte, s.bytesPerMessage*2)
+	for {
+		count, err := reader.Read(buffer)
+
+		if startTime.IsZero() {
+			startTime = time.Now()
+		}
+
+		timer.Reset(s.waitForLastMessage)
+
+		if err == factory.ErrReaderClosed {
+			break
+		}
+
+		s.countMessage(count, err)
+	}
+
+	s.runtime = time.Now().Sub(startTime)
+}
+
+func (s *Scheme) countMessage(count int, err error) {
+	atomic.AddUint64(&s.byteCount, uint64(count))
 	if err != nil {
 		atomic.AddUint32(&s.errorCount, 1)
 	}
 	switch {
 	case err != nil:
 		print(s.errorReport)
-	case bytes < s.bytesPerMessage:
+	case count < s.bytesPerMessage:
 		print(s.lessThanReport)
-	case bytes > s.bytesPerMessage:
+	case count > s.bytesPerMessage:
 		print(s.greaterThanReport)
 	default:
 		print(s.defaultReport)

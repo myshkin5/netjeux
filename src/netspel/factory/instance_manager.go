@@ -2,7 +2,6 @@ package factory
 
 import (
 	"fmt"
-	"io"
 	"reflect"
 )
 
@@ -20,22 +19,6 @@ func init() {
 
 type InstanceManager struct {
 	types map[string]reflect.Type
-}
-
-type Writer interface {
-	Init(Config) error
-	io.Writer
-}
-
-type Reader interface {
-	Init(Config) error
-	io.Reader
-}
-
-type Scheme interface {
-	Init(Config) error
-	RunWriter(writer Writer)
-	RunReader(reader Reader)
 }
 
 func NewInstanceManager() *InstanceManager {

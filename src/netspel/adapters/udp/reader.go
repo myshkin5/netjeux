@@ -31,5 +31,15 @@ func (r *Reader) Init(config factory.Config) error {
 }
 
 func (r *Reader) Read(message []byte) (int, error) {
-	return r.connection.Read(message)
+	count, err := r.connection.Read(message)
+	opErr, ok := err.(*net.OpError)
+	if err != nil && ok && opErr.Err.Error() == "use of closed network connection" {
+		return 0, factory.ErrReaderClosed
+	}
+
+	return count, err
+}
+
+func (r *Reader) Stop() {
+	r.connection.Close()
 }

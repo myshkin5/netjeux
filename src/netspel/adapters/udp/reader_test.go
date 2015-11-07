@@ -4,34 +4,53 @@ import (
 	"netspel/adapters/udp"
 	"netspel/factory"
 
+	"fmt"
 	"net"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Reader", func() {
-	It("reads from a UDP port", func() {
-		config := factory.NewConfig()
-		config.ParseAndSetAdditionalInt(udp.Port + "=51040")
+	var (
+		port   int
+		reader udp.Reader
+	)
 
-		reader := udp.Reader{}
+	BeforeEach(func() {
+		if port == 0 {
+			port = 51010
+		}
+		port++
+		config := factory.NewConfig()
+		config.ParseAndSetAdditionalInt(fmt.Sprintf("%s=%d", udp.Port, port))
+
+		reader = udp.Reader{}
 		err := reader.Init(*config)
 		Expect(err).NotTo(HaveOccurred())
+	})
 
+	It("reads from a UDP port", func() {
+		done := make(chan struct{})
 		messages := make(chan []byte, 100)
 		go func() {
+			defer GinkgoRecover()
 			messageRead := make([]byte, 1024)
 			for {
 				bytesRead, err := reader.Read(messageRead)
+				if err == factory.ErrReaderClosed {
+					break
+				}
 				Expect(err).NotTo(HaveOccurred())
 				message := make([]byte, bytesRead)
 				copy(message, messageRead[0:bytesRead])
 				messages <- message
 			}
+			close(done)
 		}()
 
-		raddr, err := net.ResolveUDPAddr("udp4", "localhost:51040")
+		raddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf("localhost:%d", port))
 		Expect(err).NotTo(HaveOccurred())
 
 		connection, err := net.DialUDP("udp4", nil, raddr)
@@ -45,5 +64,26 @@ var _ = Describe("Reader", func() {
 		var messageRead []byte
 		Eventually(messages).Should(Receive(&messageRead))
 		Expect(messageRead).To(Equal(messageSent))
+
+		reader.Stop()
+		Eventually(done).Should(BeClosed())
+	})
+
+	It("cancels a read when told to stop", func() {
+		done := make(chan struct{})
+		go func() {
+			defer GinkgoRecover()
+			messageRead := make([]byte, 1024)
+			bytesRead, err := reader.Read(messageRead)
+			Expect(err).To(HaveOccurred())
+			Expect(err).To(Equal(factory.ErrReaderClosed))
+			Expect(bytesRead).To(Equal(0))
+			close(done)
+		}()
+
+		time.Sleep(50 * time.Millisecond)
+
+		reader.Stop()
+		Eventually(done).Should(BeClosed())
 	})
 })
