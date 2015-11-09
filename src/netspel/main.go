@@ -12,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 
+	"time"
+
 	"github.com/codegangsta/cli"
 )
 
@@ -77,6 +79,8 @@ func write(context *cli.Context) {
 	}
 
 	scheme.RunWriter(writer)
+
+	outputReport(scheme)
 }
 
 func read(context *cli.Context) {
@@ -94,6 +98,8 @@ func read(context *cli.Context) {
 	}
 
 	scheme.RunReader(reader)
+
+	outputReport(scheme)
 }
 
 func config(context *cli.Context) factory.Config {
@@ -128,6 +134,15 @@ func config(context *cli.Context) factory.Config {
 	return config
 }
 
+func parseAssignment(assignment string) ([]string, error) {
+	keyValue := strings.Split(assignment, "=")
+	if len(keyValue) != 2 {
+		return []string{}, fmt.Errorf("Values must be of the form <key>=<value>, %s", assignment)
+	}
+
+	return keyValue, nil
+}
+
 func scheme(config factory.Config, context *cli.Context) factory.Scheme {
 	scheme, err := factory.CreateScheme(config.SchemeType)
 	if err != nil {
@@ -142,11 +157,15 @@ func scheme(config factory.Config, context *cli.Context) factory.Scheme {
 	return scheme
 }
 
-func parseAssignment(assignment string) ([]string, error) {
-	keyValue := strings.Split(assignment, "=")
-	if len(keyValue) != 2 {
-		return []string{}, fmt.Errorf("Values must be of the form <key>=<value>, %s", assignment)
-	}
+func outputReport(scheme factory.Scheme) {
+	bytesPerSec := ByteSize(scheme.ByteCount()) * ByteSize(time.Second) / ByteSize(scheme.RunTime().Nanoseconds())
+	messagesPerSec := float64(scheme.MessagesPerRun()) * float64(time.Second) / float64(scheme.RunTime().Nanoseconds())
 
-	return keyValue, nil
+	fmt.Printf("\n\nByte count: %d\n", scheme.ByteCount())
+	fmt.Printf("Rates: %s/s %.1f messages/s\n", bytesPerSec.String(), messagesPerSec)
+	fmt.Printf("Error count: %d\n", scheme.ErrorCount())
+	fmt.Printf("Run time: %s\n", scheme.RunTime().String())
+	if scheme.FirstError() != nil {
+		fmt.Printf("First error: %s\n", scheme.FirstError().Error())
+	}
 }

@@ -26,7 +26,7 @@ var _ = Describe("simple.Scheme", func() {
 		gexec.CleanupBuildArtifacts()
 	})
 
-	PIt("compiles, sends and receives messages via UDP", func() {
+	It("compiles, sends and receives messages via UDP", func() {
 		executablePath, err := gexec.Build("netspel")
 		Expect(err).NotTo(HaveOccurred())
 
@@ -35,7 +35,6 @@ var _ = Describe("simple.Scheme", func() {
 			gexec.NewPrefixedWriter("\x1b[37m[o]\x1b[32m[reader]\x1b[0m ", GinkgoWriter),
 			gexec.NewPrefixedWriter("\x1b[31m[e]\x1b[32m[reader]\x1b[0m ", GinkgoWriter))
 		Expect(err).NotTo(HaveOccurred())
-		time.Sleep(10 * time.Second)
 		writerCommand := exec.Command(executablePath, "--config", "./simple.json", "write")
 		writerSession, err = gexec.Start(writerCommand,
 			gexec.NewPrefixedWriter("\x1b[37m[o]\x1b[31m[writer]\x1b[0m ", GinkgoWriter),

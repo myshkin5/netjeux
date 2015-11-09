@@ -27,8 +27,8 @@ var _ = Describe("Scheme", func() {
 		reader = mocks.NewMockReader()
 		scheme = &simple.Scheme{}
 		config = make(map[string]interface{})
-		json.SetInt(simple.MessagesPerRun, 100, config)
 		json.SetInt(simple.BytesPerMessage, 1000, config)
+		json.SetInt(simple.MessagesPerRun, 100, config)
 		json.SetString(simple.WaitForLastMessage, "100ms", config)
 		json.SetString(simple.DefaultReport, "", config)
 		json.SetString(simple.LessThanReport, "", config)
@@ -41,6 +41,11 @@ var _ = Describe("Scheme", func() {
 			json.SetString(simple.WaitForLastMessage, "100ms", config)
 			err := scheme.Init(config)
 			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("returns the values it is configured with", func() {
+			Expect(scheme.BytesPerMessage()).To(Equal(1000))
+			Expect(scheme.MessagesPerRun()).To(Equal(100))
 		})
 
 		It("writes messages to a writer", func() {
@@ -61,19 +66,21 @@ var _ = Describe("Scheme", func() {
 
 			Expect(scheme.ByteCount()).To(BeEquivalentTo(100 * 1000))
 			Expect(scheme.ErrorCount()).To(BeZero())
-			Expect(scheme.Runtime()).To(BeNumerically(">", 0))
+			Expect(scheme.RunTime()).To(BeNumerically(">", 0))
 		})
 
 		It("reads messages from a reader", func() {
 			reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 10), Error: nil}
 			reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 1000), Error: nil}
-			reader.ReadMessages <- mocks.ReadMessage{Buffer: []byte{}, Error: errors.New("Bad stuff")}
+			firstError := errors.New("Bad stuff")
+			reader.ReadMessages <- mocks.ReadMessage{Buffer: []byte{}, Error: firstError}
 
 			scheme.RunReader(reader)
 
 			Eventually(scheme.ByteCount).Should(BeEquivalentTo(1010))
 			Eventually(scheme.ErrorCount).Should(BeEquivalentTo(1))
-			Expect(scheme.Runtime()).To(BeNumerically(">", time.Duration(0)))
+			Expect(scheme.RunTime()).To(BeNumerically(">", time.Duration(0)))
+			Expect(scheme.FirstError()).To(Equal(firstError))
 		})
 
 		It("can read upto twice the size message as it is expected to read", func() {

@@ -29,7 +29,8 @@ type Scheme struct {
 	buffer     []byte
 	byteCount  uint64
 	errorCount uint32
-	runtime    time.Duration
+	firstError error
+	runTime    time.Duration
 
 	bytesPerMessage    int
 	messagesPerRun     int
@@ -84,6 +85,14 @@ func (s *Scheme) Init(config map[string]interface{}) error {
 	return nil
 }
 
+func (s *Scheme) BytesPerMessage() int {
+	return s.bytesPerMessage
+}
+
+func (s *Scheme) MessagesPerRun() int {
+	return s.messagesPerRun
+}
+
 func (s *Scheme) ByteCount() uint64 {
 	return atomic.LoadUint64(&s.byteCount)
 }
@@ -92,8 +101,12 @@ func (s *Scheme) ErrorCount() uint32 {
 	return atomic.LoadUint32(&s.errorCount)
 }
 
-func (s *Scheme) Runtime() time.Duration {
-	return s.runtime
+func (s *Scheme) FirstError() error {
+	return s.firstError
+}
+
+func (s *Scheme) RunTime() time.Duration {
+	return s.runTime
 }
 
 func (s *Scheme) RunWriter(writer factory.Writer) {
@@ -101,7 +114,7 @@ func (s *Scheme) RunWriter(writer factory.Writer) {
 	for i := 0; i < s.messagesPerRun; i++ {
 		s.countMessage(writer.Write(s.buffer))
 	}
-	s.runtime = time.Now().Sub(startTime)
+	s.runTime = time.Now().Sub(startTime)
 }
 
 func (s *Scheme) RunReader(reader factory.Reader) {
@@ -139,22 +152,25 @@ func (s *Scheme) runReader(reader factory.Reader, timer *time.Timer) {
 		s.countMessage(count, err)
 	}
 
-	s.runtime = time.Now().Sub(startTime)
+	s.runTime = time.Now().Sub(startTime)
 }
 
 func (s *Scheme) countMessage(count int, err error) {
 	atomic.AddUint64(&s.byteCount, uint64(count))
 	if err != nil {
 		atomic.AddUint32(&s.errorCount, 1)
+		if s.firstError == nil {
+			s.firstError = err
+		}
 	}
 	switch {
 	case err != nil:
-		print(s.errorReport)
+		fmt.Print(s.errorReport)
 	case count < s.bytesPerMessage:
-		print(s.lessThanReport)
+		fmt.Print(s.lessThanReport)
 	case count > s.bytesPerMessage:
-		print(s.greaterThanReport)
+		fmt.Print(s.greaterThanReport)
 	default:
-		print(s.defaultReport)
+		fmt.Print(s.defaultReport)
 	}
 }

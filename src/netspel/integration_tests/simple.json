@@ -4,8 +4,9 @@
   "reader-type": "netspel.adapters.udp.Reader",
   "additional": {
     "simple": {
-      "bytes-per-message": 10000,
-      "messages-per-run": 1000
+      "bytes-per-message": 100,
+      "messages-per-run": 10,
+      "wait-for-last-message": "1s"
     },
     "udp": {
       "port": 46354,

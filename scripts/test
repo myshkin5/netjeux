@@ -5,4 +5,12 @@ set -e
 cd $(dirname $0)/../src/netspel
 
 goimports -w .
-ginkgo -r -keepGoing -race
+
+echo -e "\033[1m\033[42mUnit tests...                                                                   \033[0m"
+ginkgo -r -keepGoing -race -skipPackage integration_tests $@
+
+echo -e "\033[1m\033[42mIntegration tests...                                                            \033[0m"
+cd integration_tests
+ginkgo -r -keepGoing -race -skipPackage integration_tests $@
+
+echo -e "\033[1m\033[42mCompleted successfully.                                                         \033[0m"
