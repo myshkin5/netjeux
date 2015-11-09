@@ -1,14 +1,13 @@
 package simple_test
 
 import (
-	"netspel/schemes/internal/mocks"
-	"netspel/schemes/simple"
-
 	"errors"
 	"sync"
 	"time"
 
-	"netspel/json"
+	"netspel/jsonstruct"
+	"netspel/schemes/internal/mocks"
+	"netspel/schemes/simple"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -19,26 +18,26 @@ var _ = Describe("Scheme", func() {
 		writer *mocks.MockWriter
 		reader *mocks.MockReader
 		scheme *simple.Scheme
-		config map[string]interface{}
+		config jsonstruct.JSONStruct
 	)
 
 	BeforeEach(func() {
 		writer = mocks.NewMockWriter()
 		reader = mocks.NewMockReader()
 		scheme = &simple.Scheme{}
-		config = make(map[string]interface{})
-		json.SetInt(simple.BytesPerMessage, 1000, config)
-		json.SetInt(simple.MessagesPerRun, 100, config)
-		json.SetString(simple.WaitForLastMessage, "100ms", config)
-		json.SetString(simple.DefaultReport, "", config)
-		json.SetString(simple.LessThanReport, "", config)
-		json.SetString(simple.ErrorReport, "", config)
-		json.SetString(simple.GreaterThanReport, "", config)
+		config = jsonstruct.JSONStruct(make(map[string]interface{}))
+		config.SetInt(simple.BytesPerMessage, 1000)
+		config.SetInt(simple.MessagesPerRun, 100)
+		config.SetString(simple.WaitForLastMessage, "100ms")
+		config.SetString(simple.DefaultReport, "")
+		config.SetString(simple.LessThanReport, "")
+		config.SetString(simple.ErrorReport, "")
+		config.SetString(simple.GreaterThanReport, "")
 	})
 
 	Context("with a short wait time", func() {
 		JustBeforeEach(func() {
-			json.SetString(simple.WaitForLastMessage, "100ms", config)
+			config.SetString(simple.WaitForLastMessage, "100ms")
 			err := scheme.Init(config)
 			Expect(err).NotTo(HaveOccurred())
 		})
@@ -95,7 +94,7 @@ var _ = Describe("Scheme", func() {
 
 	Context("with a longer wait time", func() {
 		JustBeforeEach(func() {
-			json.SetString(simple.WaitForLastMessage, "1s", config)
+			config.SetString(simple.WaitForLastMessage, "1s")
 			err := scheme.Init(config)
 			Expect(err).NotTo(HaveOccurred())
 		})
@@ -112,6 +111,57 @@ var _ = Describe("Scheme", func() {
 			Consistently(done, 800*time.Millisecond).ShouldNot(BeClosed())
 
 			Eventually(done).Should(BeClosed())
+			Expect(scheme.RunTime()).To(BeNumerically("<", 500*time.Millisecond))
+		})
+	})
+
+	Context("with configuration to send warmup messages", func() {
+		JustBeforeEach(func() {
+			config.SetInt(simple.WarmupMessagesPerRun, 5)
+			config.SetString(simple.WarmupWait, "1s")
+			err := scheme.Init(config)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("sends warmup messages then pauses before sending the remaining messages", func() {
+			wg := sync.WaitGroup{}
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				scheme.RunWriter(writer)
+			}()
+
+			var sentMessage []byte
+			for i := 0; i < 5; i++ {
+				Eventually(writer.Messages).Should(Receive(&sentMessage))
+				Expect(sentMessage).To(HaveLen(1000))
+			}
+
+			Consistently(writer.Messages, 500*time.Millisecond).ShouldNot(Receive())
+
+			for i := 0; i < 100; i++ {
+				Eventually(writer.Messages).Should(Receive(&sentMessage))
+				Expect(sentMessage).To(HaveLen(1000))
+			}
+
+			wg.Wait()
+
+			Expect(scheme.ByteCount()).To(BeEquivalentTo(100 * 1000))
+			Expect(scheme.ErrorCount()).To(BeZero())
+			Expect(scheme.RunTime()).To(BeNumerically(">", 0))
+		})
+
+		It("ignores warmup messages read first as the reader is warming up", func() {
+			reader.ReadMessages <- mocks.ReadMessage{Buffer: []byte{}, Error: errors.New("Bad stuff")}
+			for i := 0; i < 4; i++ {
+				reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 10), Error: nil}
+			}
+			reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 1000), Error: nil}
+
+			scheme.RunReader(reader)
+
+			Eventually(scheme.ByteCount).Should(BeEquivalentTo(1000))
+			Eventually(scheme.ErrorCount).Should(BeEquivalentTo(0))
 		})
 	})
 })

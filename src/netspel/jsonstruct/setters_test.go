@@ -1,8 +1,10 @@
-package json_test
+package jsonstruct_test
 
 import (
-	encoding_json "encoding/json"
-	"netspel/json"
+	"encoding/json"
+	"netspel/jsonstruct"
+
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -10,12 +12,12 @@ import (
 
 var _ = Describe("Setters", func() {
 	var (
-		values map[string]interface{}
+		values jsonstruct.JSONStruct
 	)
 
 	Describe("SetString()", func() {
 		It("overrides existing values", func() {
-			err := encoding_json.Unmarshal([]byte(`{
+			err := json.Unmarshal([]byte(`{
 				"this": "that",
 				"parent": {
 					"child": "value"
@@ -24,39 +26,39 @@ var _ = Describe("Setters", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 
-			json.SetString("this", "something else", values)
+			values.SetString("this", "something else")
 
-			value, ok := json.String("this", values)
+			value, ok := values.String("this")
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal("something else"))
 
-			json.SetString("parent.child", "new value", values)
+			values.SetString("parent.child", "new value")
 
-			value, ok = json.String("parent.child", values)
+			value, ok = values.String("parent.child")
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal("new value"))
 		})
 
 		It("can set a string to empty string", func() {
 			values = make(map[string]interface{})
-			json.SetString("value", "something", values)
-			json.SetString("value", "", values)
+			values.SetString("value", "something")
+			values.SetString("value", "")
 
-			value, ok := json.String("value", values)
+			value, ok := values.String("value")
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal(""))
 
-			json.SetString("another", "", values)
+			values.SetString("another", "")
 
-			another, ok := json.String("another", values)
+			another, ok := values.String("another")
 			Expect(ok).To(BeTrue())
 			Expect(another).To(Equal(""))
 		})
 
 		It("can set values multiple levels deep", func() {
 			values = make(map[string]interface{})
-			json.SetString("one.two.three", "hi", values)
-			value, ok := json.String("one.two.three", values)
+			values.SetString("one.two.three", "hi")
+			value, ok := values.String("one.two.three")
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal("hi"))
 		})
@@ -64,7 +66,7 @@ var _ = Describe("Setters", func() {
 
 	Describe("SetInt()", func() {
 		It("overrides existing values", func() {
-			err := encoding_json.Unmarshal([]byte(`{
+			err := json.Unmarshal([]byte(`{
 				"this": "that",
 				"parent": {
 					"child": 98765
@@ -73,17 +75,27 @@ var _ = Describe("Setters", func() {
 
 			Expect(err).NotTo(HaveOccurred())
 
-			json.SetInt("this", 1000000, values)
+			values.SetInt("this", 1000000)
 
-			value, ok := json.Int("this", values)
+			value, ok := values.Int("this")
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal(1000000))
 
-			json.SetInt("parent.child", 12345, values)
+			values.SetInt("parent.child", 12345)
 
-			value, ok = json.Int("parent.child", values)
+			value, ok = values.Int("parent.child")
 			Expect(ok).To(BeTrue())
 			Expect(value).To(Equal(12345))
+		})
+	})
+
+	Describe("SetDuration()", func() {
+		It("sets a duration value as a string", func() {
+			values = make(map[string]interface{})
+
+			values.SetDuration("duration-path", 32*time.Second)
+
+			Expect(values["duration-path"]).To(Equal("32s"))
 		})
 	})
 })

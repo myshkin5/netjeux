@@ -5,7 +5,7 @@ import (
 	"net"
 	"strconv"
 
-	"netspel/json"
+	"netspel/jsonstruct"
 )
 
 const (
@@ -19,13 +19,13 @@ type Writer struct {
 	connection *net.UDPConn
 }
 
-func (w *Writer) Init(config map[string]interface{}) error {
-	remoteAddr, ok := json.String(RemoteAddr, config)
+func (w *Writer) Init(config jsonstruct.JSONStruct) error {
+	remoteAddr, ok := config.String(RemoteAddr)
 	if !ok {
 		return fmt.Errorf("%s must be specified in the config additional section", RemoteAddr)
 	}
 
-	port, ok := json.Int(Port, config)
+	port, ok := config.Int(Port)
 	if !ok {
 		return fmt.Errorf("%s must be specified in the config additional section", Port)
 	}

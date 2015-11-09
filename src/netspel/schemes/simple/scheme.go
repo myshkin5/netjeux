@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"netspel/factory"
-	"netspel/json"
+	"netspel/jsonstruct"
 )
 
 const (
@@ -17,8 +17,10 @@ const (
 	BytesPerMessage    = prefix + "bytes-per-message"
 	WaitForLastMessage = prefix + "wait-for-last-message"
 
-	reportPrefix = prefix + "report-flags."
+	WarmupMessagesPerRun = prefix + "warmup-messages-per-run"
+	WarmupWait           = prefix + "warmup-wait"
 
+	reportPrefix      = prefix + "report-flags."
 	DefaultReport     = reportPrefix + "default"
 	LessThanReport    = reportPrefix + "less-than"
 	ErrorReport       = reportPrefix + "error"
@@ -36,51 +38,44 @@ type Scheme struct {
 	messagesPerRun     int
 	waitForLastMessage time.Duration
 
+	warmupMessagesPerRun int
+	warmupWait           time.Duration
+
 	defaultReport     string
 	lessThanReport    string
 	errorReport       string
 	greaterThanReport string
 }
 
-func (s *Scheme) Init(config map[string]interface{}) error {
+func (s *Scheme) Init(config jsonstruct.JSONStruct) error {
 	var ok bool
-	s.bytesPerMessage, ok = json.Int(BytesPerMessage, config)
+	s.bytesPerMessage, ok = config.Int(BytesPerMessage)
 	if !ok {
 		return fmt.Errorf("%s must be specified in the config additional section", BytesPerMessage)
 	}
 	s.buffer = make([]byte, s.bytesPerMessage)
 
-	s.messagesPerRun, ok = json.Int(MessagesPerRun, config)
+	s.messagesPerRun, ok = config.Int(MessagesPerRun)
 	if !ok {
 		return fmt.Errorf("%s must be specified in the config additional section", MessagesPerRun)
 	}
 
-	wait, ok := json.String(WaitForLastMessage, config)
-	if !ok {
-		wait = "5s"
-	}
 	var err error
-	s.waitForLastMessage, err = time.ParseDuration(wait)
+	s.waitForLastMessage, err = config.DurationWithDefault(WaitForLastMessage, 5*time.Second)
 	if err != nil {
 		return err
 	}
 
-	s.defaultReport, ok = json.String(DefaultReport, config)
-	if !ok {
-		s.defaultReport = "."
+	s.warmupMessagesPerRun = config.IntWithDefault(WarmupMessagesPerRun, 0)
+	s.warmupWait, err = config.DurationWithDefault(WarmupWait, 5*time.Second)
+	if err != nil {
+		return err
 	}
-	s.lessThanReport, ok = json.String(LessThanReport, config)
-	if !ok {
-		s.lessThanReport = "<"
-	}
-	s.errorReport, ok = json.String(ErrorReport, config)
-	if !ok {
-		s.errorReport = "#"
-	}
-	s.greaterThanReport, ok = json.String(GreaterThanReport, config)
-	if !ok {
-		s.greaterThanReport = ">"
-	}
+
+	s.defaultReport = config.StringWithDefault(DefaultReport, ".")
+	s.lessThanReport = config.StringWithDefault(LessThanReport, "<")
+	s.errorReport = config.StringWithDefault(ErrorReport, "#")
+	s.greaterThanReport = config.StringWithDefault(GreaterThanReport, ">")
 
 	return nil
 }
@@ -110,6 +105,14 @@ func (s *Scheme) RunTime() time.Duration {
 }
 
 func (s *Scheme) RunWriter(writer factory.Writer) {
+	for i := 0; i < s.warmupMessagesPerRun; i++ {
+		writer.Write(s.buffer)
+	}
+
+	if s.warmupMessagesPerRun > 0 {
+		time.Sleep(s.warmupWait)
+	}
+
 	startTime := time.Now()
 	for i := 0; i < s.messagesPerRun; i++ {
 		s.countMessage(writer.Write(s.buffer))
@@ -134,25 +137,29 @@ func (s *Scheme) RunReader(reader factory.Reader) {
 }
 
 func (s *Scheme) runReader(reader factory.Reader, timer *time.Timer) {
-	var startTime time.Time
+	var startTime, lastMessageTime time.Time
 	buffer := make([]byte, s.bytesPerMessage*2)
+	for i := 0; i < s.warmupMessagesPerRun; i++ {
+		reader.Read(buffer)
+	}
+
 	for {
 		count, err := reader.Read(buffer)
-
-		if startTime.IsZero() {
-			startTime = time.Now()
-		}
-
-		timer.Reset(s.waitForLastMessage)
-
 		if err == factory.ErrReaderClosed {
 			break
 		}
 
+		lastMessageTime = time.Now()
+		if startTime.IsZero() {
+			startTime = lastMessageTime
+		}
+
+		timer.Reset(s.waitForLastMessage)
+
 		s.countMessage(count, err)
 	}
 
-	s.runTime = time.Now().Sub(startTime)
+	s.runTime = lastMessageTime.Sub(startTime)
 }
 
 func (s *Scheme) countMessage(count int, err error) {

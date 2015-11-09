@@ -1,6 +1,9 @@
 package mocks
 
-import "netspel/factory"
+import (
+	"netspel/factory"
+	"netspel/jsonstruct"
+)
 
 type ReadMessage struct {
 	Buffer []byte
@@ -17,7 +20,7 @@ func NewMockReader() *MockReader {
 	}
 }
 
-func (m *MockReader) Init(config map[string]interface{}) error {
+func (m *MockReader) Init(config jsonstruct.JSONStruct) error {
 	return nil
 }
 

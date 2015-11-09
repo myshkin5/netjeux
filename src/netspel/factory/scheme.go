@@ -2,10 +2,12 @@ package factory
 
 import (
 	"time"
+
+	"netspel/jsonstruct"
 )
 
 type Scheme interface {
-	Init(config map[string]interface{}) error
+	Init(config jsonstruct.JSONStruct) error
 
 	BytesPerMessage() int
 	MessagesPerRun() int

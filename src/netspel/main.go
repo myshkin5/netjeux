@@ -1,18 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
+	"time"
 
 	"netspel/adapters/udp"
 	"netspel/factory"
 	"netspel/schemes/simple"
-
-	"fmt"
-	"netspel/json"
-	"strconv"
-	"strings"
-
-	"time"
 
 	"github.com/codegangsta/cli"
 )
@@ -115,7 +112,7 @@ func config(context *cli.Context) factory.Config {
 			panic(err)
 		}
 
-		json.SetString(keyValue[0], keyValue[1], config.Additional)
+		config.Additional.SetString(keyValue[0], keyValue[1])
 	}
 	for _, assignment := range context.GlobalStringSlice("config-int") {
 		keyValue, err := parseAssignment(assignment)
@@ -128,7 +125,7 @@ func config(context *cli.Context) factory.Config {
 			panic(err)
 		}
 
-		json.SetInt(keyValue[0], value, config.Additional)
+		config.Additional.SetInt(keyValue[0], value)
 	}
 
 	return config

@@ -5,7 +5,7 @@ import (
 	"net"
 
 	"netspel/adapters/udp"
-	"netspel/json"
+	"netspel/jsonstruct"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,9 +31,9 @@ var _ = Describe("Writer", func() {
 			}
 		}()
 
-		config := make(map[string]interface{})
-		json.SetInt(udp.Port, 51041, config)
-		json.SetString(udp.RemoteAddr, "localhost", config)
+		config := jsonstruct.JSONStruct(make(map[string]interface{}))
+		config.SetInt(udp.Port, 51041)
+		config.SetString(udp.RemoteAddr, "localhost")
 
 		writer := udp.Writer{}
 		err = writer.Init(config)

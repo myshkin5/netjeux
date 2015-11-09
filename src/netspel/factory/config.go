@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"netspel/jsonstruct"
 )
 
 type Config struct {
-	SchemeType string                 `json:"scheme-type"`
-	WriterType string                 `json:"writer-type"`
-	ReaderType string                 `json:"reader-type"`
-	Additional map[string]interface{} `json:"additional"`
+	SchemeType string                `json:"scheme-type"`
+	WriterType string                `json:"writer-type"`
+	ReaderType string                `json:"reader-type"`
+	Additional jsonstruct.JSONStruct `json:"additional"`
 }
 
 func LoadFromFile(filename string) (Config, error) {

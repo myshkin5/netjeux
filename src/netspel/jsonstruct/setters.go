@@ -1,28 +1,34 @@
-package json
+package jsonstruct
 
 import (
 	"strings"
+	"time"
 )
 
-func SetString(dotPath, value string, json map[string]interface{}) {
-	parent, lastKey := findParent(dotPath, json)
+func (s JSONStruct) SetString(dotPath, value string) {
+	parent, lastKey := s.findParent(dotPath)
 	parent[lastKey] = value
 }
 
-func SetInt(dotPath string, value int, json map[string]interface{}) {
-	parent, lastKey := findParent(dotPath, json)
+func (s JSONStruct) SetInt(dotPath string, value int) {
+	parent, lastKey := s.findParent(dotPath)
 	parent[lastKey] = value
 }
 
-func findParent(dotPath string, json map[string]interface{}) (map[string]interface{}, string) {
+func (s JSONStruct) SetDuration(dotPath string, value time.Duration) {
+	parent, lastKey := s.findParent(dotPath)
+	parent[lastKey] = value.String()
+}
+
+func (s JSONStruct) findParent(dotPath string) (map[string]interface{}, string) {
 	keys := strings.Split(dotPath, ".")
 	if len(keys) == 1 {
-		return json, keys[0]
+		return s, keys[0]
 	}
 	lastKey := keys[len(keys)-1]
 	keys = keys[0 : len(keys)-1]
 
-	value := json
+	value := s
 	for _, key := range keys {
 		var ok bool
 		child, ok := value[key]

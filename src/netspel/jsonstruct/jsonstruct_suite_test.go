@@ -1,4 +1,4 @@
-package json_test
+package jsonstruct_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -9,5 +9,5 @@ import (
 
 func TestJSON(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "JSON Suite")
+	RunSpecs(t, "JSONStruct Suite")
 }

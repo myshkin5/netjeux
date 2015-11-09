@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	"netspel/json"
+	"netspel/jsonstruct"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -25,8 +25,8 @@ var _ = Describe("Reader", func() {
 			port = 51010
 		}
 		port++
-		config := make(map[string]interface{})
-		json.SetInt(udp.Port, port, config)
+		config := jsonstruct.JSONStruct(make(map[string]interface{}))
+		config.SetInt(udp.Port, port)
 
 		reader = udp.Reader{}
 		err := reader.Init(config)

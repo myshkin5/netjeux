@@ -1,5 +1,7 @@
 package mocks
 
+import "netspel/jsonstruct"
+
 type MockWriter struct {
 	Messages chan []byte
 }
@@ -10,7 +12,7 @@ func NewMockWriter() *MockWriter {
 	}
 }
 
-func (m *MockWriter) Init(config map[string]interface{}) error {
+func (m *MockWriter) Init(config jsonstruct.JSONStruct) error {
 	return nil
 }
 

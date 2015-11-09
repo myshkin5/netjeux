@@ -3,6 +3,8 @@ package factory
 import (
 	"errors"
 	"io"
+
+	"netspel/jsonstruct"
 )
 
 var (
@@ -10,12 +12,12 @@ var (
 )
 
 type Writer interface {
-	Init(config map[string]interface{}) error
+	Init(config jsonstruct.JSONStruct) error
 	io.Writer
 }
 
 type Reader interface {
-	Init(config map[string]interface{}) error
+	Init(config jsonstruct.JSONStruct) error
 	Stop()
 	io.Reader
 }
