@@ -2,9 +2,9 @@ package udp
 
 import (
 	"fmt"
+	"io"
 	"net"
 
-	"netspel/factory"
 	"netspel/jsonstruct"
 )
 
@@ -35,12 +35,12 @@ func (r *Reader) Read(message []byte) (int, error) {
 	count, err := r.connection.Read(message)
 	opErr, ok := err.(*net.OpError)
 	if err != nil && ok && opErr.Err.Error() == "use of closed network connection" {
-		return 0, factory.ErrReaderClosed
+		return 0, io.EOF
 	}
 
 	return count, err
 }
 
-func (r *Reader) Stop() {
-	r.connection.Close()
+func (r *Reader) Close() error {
+	return r.connection.Close()
 }

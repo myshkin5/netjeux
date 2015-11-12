@@ -1,7 +1,7 @@
 package mocks
 
 import (
-	"netspel/factory"
+	"io"
 	"netspel/jsonstruct"
 )
 
@@ -37,6 +37,7 @@ func (m *MockReader) Read(message []byte) (int, error) {
 	return bytesRead, readMessage.Error
 }
 
-func (m *MockReader) Stop() {
-	m.ReadMessages <- ReadMessage{Buffer: []byte{}, Error: factory.ErrReaderClosed}
+func (m *MockReader) Close() error {
+	m.ReadMessages <- ReadMessage{Buffer: []byte{}, Error: io.EOF}
+	return nil
 }

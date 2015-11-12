@@ -9,9 +9,11 @@ import (
 
 	"netspel/adapters/udp"
 	"netspel/factory"
+	"netspel/logs"
 	"netspel/schemes/simple"
 
 	"github.com/codegangsta/cli"
+	"github.com/op/go-logging"
 )
 
 func init() {
@@ -38,6 +40,11 @@ func main() {
 			Name:  "config-int, i",
 			Usage: "additional configuration <key>=<value> integers overriding the config file",
 		},
+		cli.StringFlag{
+			Name:   "log-level, l",
+			Usage:  "logging level",
+			EnvVar: "INFO,DEBUG",
+		},
 	}
 	app.Commands = []cli.Command{
 		cli.Command{
@@ -62,6 +69,8 @@ func main() {
 }
 
 func write(context *cli.Context) {
+	initLogs(context)
+
 	config := config(context)
 	scheme := scheme(config, context)
 
@@ -81,6 +90,8 @@ func write(context *cli.Context) {
 }
 
 func read(context *cli.Context) {
+	initLogs(context)
+
 	config := config(context)
 	scheme := scheme(config, context)
 
@@ -97,6 +108,15 @@ func read(context *cli.Context) {
 	scheme.RunReader(reader)
 
 	outputReport(scheme)
+}
+
+func initLogs(context *cli.Context) {
+	level, err := logging.LogLevel(context.GlobalString("log-level"))
+	if err != nil {
+		level = logging.INFO
+	}
+
+	logs.LogLevel.SetLevel(level, "netspel")
 }
 
 func config(context *cli.Context) factory.Config {

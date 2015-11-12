@@ -1,13 +1,12 @@
 package udp_test
 
 import (
-	"netspel/adapters/udp"
-	"netspel/factory"
-
 	"fmt"
+	"io"
 	"net"
 	"time"
 
+	"netspel/adapters/udp"
 	"netspel/jsonstruct"
 
 	. "github.com/onsi/ginkgo"
@@ -41,7 +40,7 @@ var _ = Describe("Reader", func() {
 			messageRead := make([]byte, 1024)
 			for {
 				bytesRead, err := reader.Read(messageRead)
-				if err == factory.ErrReaderClosed {
+				if err == io.EOF {
 					break
 				}
 				Expect(err).NotTo(HaveOccurred())
@@ -67,7 +66,8 @@ var _ = Describe("Reader", func() {
 		Eventually(messages).Should(Receive(&messageRead))
 		Expect(messageRead).To(Equal(messageSent))
 
-		reader.Stop()
+		err = reader.Close()
+		Expect(err).NotTo(HaveOccurred())
 		Eventually(done).Should(BeClosed())
 	})
 
@@ -77,15 +77,15 @@ var _ = Describe("Reader", func() {
 			defer GinkgoRecover()
 			messageRead := make([]byte, 1024)
 			bytesRead, err := reader.Read(messageRead)
-			Expect(err).To(HaveOccurred())
-			Expect(err).To(Equal(factory.ErrReaderClosed))
+			Expect(err).To(Equal(io.EOF))
 			Expect(bytesRead).To(Equal(0))
 			close(done)
 		}()
 
 		time.Sleep(50 * time.Millisecond)
 
-		reader.Stop()
+		err := reader.Close()
+		Expect(err).NotTo(HaveOccurred())
 		Eventually(done).Should(BeClosed())
 	})
 })

@@ -2,12 +2,14 @@ package simple
 
 import (
 	"fmt"
+	"io"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"netspel/factory"
 	"netspel/jsonstruct"
+	"netspel/logs"
 )
 
 const (
@@ -131,7 +133,10 @@ func (s *Scheme) RunReader(reader factory.Reader) {
 
 	<-timer.C
 
-	reader.Stop()
+	err := reader.Close()
+	if err != nil {
+		logs.Logger.Warning("Error closing reader, %s", err.Error())
+	}
 
 	wg.Wait()
 }
@@ -145,7 +150,7 @@ func (s *Scheme) runReader(reader factory.Reader, timer *time.Timer) {
 
 	for {
 		count, err := reader.Read(buffer)
-		if err == factory.ErrReaderClosed {
+		if err == io.EOF {
 			break
 		}
 
