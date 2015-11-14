@@ -46,3 +46,7 @@ func (w *Writer) Init(config jsonstruct.JSONStruct) error {
 func (w *Writer) Write(message []byte) (int, error) {
 	return w.connection.Write(message)
 }
+
+func (w *Writer) Close() error {
+	return w.connection.Close()
+}

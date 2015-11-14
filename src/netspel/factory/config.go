@@ -41,7 +41,7 @@ func Parse(buffer []byte) (Config, error) {
 	}
 
 	if config.Additional == nil {
-		config.Additional = make(map[string]interface{})
+		config.Additional = jsonstruct.New()
 	}
 
 	return config, nil

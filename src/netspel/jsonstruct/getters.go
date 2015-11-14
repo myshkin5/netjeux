@@ -8,6 +8,10 @@ import (
 
 type JSONStruct map[string]interface{}
 
+func New() JSONStruct {
+	return JSONStruct(make(map[string]interface{}))
+}
+
 var (
 	ErrValueNotFound = errors.New("Value not found")
 )

@@ -8,7 +8,7 @@ import (
 
 type Writer interface {
 	Init(config jsonstruct.JSONStruct) error
-	io.Writer
+	io.WriteCloser
 }
 
 type Reader interface {

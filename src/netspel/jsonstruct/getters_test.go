@@ -16,7 +16,7 @@ var _ = Describe("JSON", func() {
 	)
 
 	BeforeEach(func() {
-		values = jsonstruct.JSONStruct(make(map[string]interface{}))
+		values = jsonstruct.New()
 	})
 
 	Describe("String()", func() {

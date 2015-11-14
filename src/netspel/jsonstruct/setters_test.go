@@ -40,7 +40,7 @@ var _ = Describe("Setters", func() {
 		})
 
 		It("can set a string to empty string", func() {
-			values = make(map[string]interface{})
+			values = jsonstruct.New()
 			values.SetString("value", "something")
 			values.SetString("value", "")
 
@@ -56,7 +56,7 @@ var _ = Describe("Setters", func() {
 		})
 
 		It("can set values multiple levels deep", func() {
-			values = make(map[string]interface{})
+			values = jsonstruct.New()
 			values.SetString("one.two.three", "hi")
 			value, ok := values.String("one.two.three")
 			Expect(ok).To(BeTrue())
@@ -91,7 +91,7 @@ var _ = Describe("Setters", func() {
 
 	Describe("SetDuration()", func() {
 		It("sets a duration value as a string", func() {
-			values = make(map[string]interface{})
+			values = jsonstruct.New()
 
 			values.SetDuration("duration-path", 32*time.Second)
 

@@ -120,6 +120,11 @@ func (s *Scheme) RunWriter(writer factory.Writer) {
 		s.countMessage(writer.Write(s.buffer))
 	}
 	s.runTime = time.Now().Sub(startTime)
+
+	err := writer.Close()
+	if err != nil {
+		logs.Logger.Warning("Error closing writer, %s", err.Error())
+	}
 }
 
 func (s *Scheme) RunReader(reader factory.Reader) {

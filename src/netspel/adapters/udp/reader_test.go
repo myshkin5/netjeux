@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"time"
 
 	"netspel/adapters/udp"
 	"netspel/jsonstruct"
+
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -24,7 +25,7 @@ var _ = Describe("Reader", func() {
 			port = 51010
 		}
 		port++
-		config := jsonstruct.JSONStruct(make(map[string]interface{}))
+		config := jsonstruct.New()
 		config.SetInt(udp.Port, port)
 
 		reader = udp.Reader{}
@@ -73,19 +74,20 @@ var _ = Describe("Reader", func() {
 
 	It("cancels a read when told to stop", func() {
 		done := make(chan struct{})
+		messageRead := make([]byte, 1024)
 		go func() {
 			defer GinkgoRecover()
-			messageRead := make([]byte, 1024)
 			bytesRead, err := reader.Read(messageRead)
 			Expect(err).To(Equal(io.EOF))
 			Expect(bytesRead).To(Equal(0))
 			close(done)
 		}()
 
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 
 		err := reader.Close()
 		Expect(err).NotTo(HaveOccurred())
+
 		Eventually(done).Should(BeClosed())
 	})
 })

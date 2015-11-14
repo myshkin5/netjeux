@@ -20,7 +20,7 @@ func (s JSONStruct) SetDuration(dotPath string, value time.Duration) {
 	parent[lastKey] = value.String()
 }
 
-func (s JSONStruct) findParent(dotPath string) (map[string]interface{}, string) {
+func (s JSONStruct) findParent(dotPath string) (JSONStruct, string) {
 	keys := strings.Split(dotPath, ".")
 	if len(keys) == 1 {
 		return s, keys[0]

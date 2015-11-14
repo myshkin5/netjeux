@@ -20,3 +20,7 @@ func (m *MockWriter) Write(message []byte) (int, error) {
 	m.Messages <- message
 	return len(message), nil
 }
+
+func (m *MockWriter) Close() error {
+	return nil
+}

@@ -1,30 +1,49 @@
 package sse_test
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"time"
-
-	vitosse "github.com/vito/go-sse/sse"
 
 	"netspel/adapters/sse"
 	"netspel/jsonstruct"
 
-	"fmt"
-	"io"
+	vitosse "github.com/vito/go-sse/sse"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-var (
-	port            int
-	sleepBeforeSend time.Duration
-	events          []*vitosse.Event
-	config          jsonstruct.JSONStruct
-	reader          sse.Reader
-)
-
 var _ = Describe("Reader", func() {
+	var (
+		port            int
+		sleepBeforeSend time.Duration
+		events          []*vitosse.Event
+		config          jsonstruct.JSONStruct
+		reader          sse.Reader
+	)
+
+	handle := func(w http.ResponseWriter, r *http.Request) {
+		defer GinkgoRecover()
+
+		w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("\n"))
+		flusher := w.(http.Flusher)
+		flusher.Flush()
+
+		time.Sleep(sleepBeforeSend)
+
+		for _, event := range events {
+			err := event.Write(w)
+			Expect(err).NotTo(HaveOccurred())
+			flusher.Flush()
+		}
+	}
+
 	BeforeEach(func() {
 		if port == 0 {
 			port = 49282
@@ -39,9 +58,9 @@ var _ = Describe("Reader", func() {
 
 		events = []*vitosse.Event{}
 
-		time.Sleep(time.Second)
+		time.Sleep(50 * time.Millisecond)
 
-		config = jsonstruct.JSONStruct(make(map[string]interface{}))
+		config = jsonstruct.New()
 		config.SetString(sse.RemoteAddr, "localhost")
 		config.SetInt(sse.Port, port)
 
@@ -76,7 +95,7 @@ var _ = Describe("Reader", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	It("returns from a call to Read() when Stop() is called", func() {
+	It("returns from a call to Read() when Close() is called", func() {
 		err := reader.Init(config)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -91,30 +110,10 @@ var _ = Describe("Reader", func() {
 			close(done)
 		}()
 
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 
 		err = reader.Close()
 		Expect(err).NotTo(HaveOccurred())
 		Eventually(done).Should(BeClosed())
 	})
 })
-
-func handle(w http.ResponseWriter, r *http.Request) {
-	defer GinkgoRecover()
-
-	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("\n"))
-	flusher := w.(http.Flusher)
-	flusher.Flush()
-
-	time.Sleep(sleepBeforeSend)
-
-	for _, event := range events {
-		err := event.Write(w)
-		Expect(err).NotTo(HaveOccurred())
-		flusher.Flush()
-	}
-}

@@ -31,7 +31,7 @@ var _ = Describe("Writer", func() {
 			}
 		}()
 
-		config := jsonstruct.JSONStruct(make(map[string]interface{}))
+		config := jsonstruct.New()
 		config.SetInt(udp.Port, 51041)
 		config.SetString(udp.RemoteAddr, "localhost")
 

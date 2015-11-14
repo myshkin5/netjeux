@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"net/http"
 
-	vitosse "github.com/vito/go-sse/sse"
-
 	"netspel/jsonstruct"
+
+	vitosse "github.com/vito/go-sse/sse"
 )
 
 const (

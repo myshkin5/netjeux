@@ -25,7 +25,7 @@ var _ = Describe("Scheme", func() {
 		writer = mocks.NewMockWriter()
 		reader = mocks.NewMockReader()
 		scheme = &simple.Scheme{}
-		config = jsonstruct.JSONStruct(make(map[string]interface{}))
+		config = jsonstruct.New()
 		config.SetInt(simple.BytesPerMessage, 1000)
 		config.SetInt(simple.MessagesPerRun, 100)
 		config.SetString(simple.WaitForLastMessage, "100ms")
