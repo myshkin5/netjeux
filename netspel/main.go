@@ -13,11 +13,16 @@ import (
 	"github.com/myshkin5/netspel/logs"
 	"github.com/myshkin5/netspel/schemes/simple"
 	"github.com/op/go-logging"
+	"github.com/myshkin5/netspel/adapters/sse"
 )
 
 func init() {
 	factory.WriterManager.RegisterType("netspel.adapters.udp.Writer", reflect.TypeOf(udp.Writer{}))
 	factory.ReaderManager.RegisterType("netspel.adapters.udp.Reader", reflect.TypeOf(udp.Reader{}))
+
+	factory.WriterManager.RegisterType("netspel.adapters.sse.Writer", reflect.TypeOf(sse.Writer{}))
+	factory.ReaderManager.RegisterType("netspel.adapters.sse.Reader", reflect.TypeOf(sse.Reader{}))
+
 	factory.SchemeManager.RegisterType("netspel.schemes.simple.Scheme", reflect.TypeOf(simple.Scheme{}))
 }
 
@@ -31,12 +36,24 @@ func main() {
 			Name:  "config, c",
 			Usage: "configuration file",
 		},
+		cli.StringFlag{
+			Name:  "scheme, s",
+			Usage: "scheme type overriding the config file",
+		},
+		cli.StringFlag{
+			Name:  "writer, w",
+			Usage: "writer type overriding the config file",
+		},
+		cli.StringFlag{
+			Name:  "reader, r",
+			Usage: "reader type overriding the config file",
+		},
 		cli.StringSliceFlag{
-			Name:  "config-string, s",
+			Name:  "config-string",
 			Usage: "additional configuration <key>=<value> strings overriding the config file",
 		},
 		cli.StringSliceFlag{
-			Name:  "config-int, i",
+			Name:  "config-int",
 			Usage: "additional configuration <key>=<value> integers overriding the config file",
 		},
 		cli.StringFlag{
@@ -80,6 +97,7 @@ func write(context *cli.Context) {
 
 	err = writer.Init(config.Additional)
 	if err != nil {
+		cli.ShowAppHelp(context)
 		panic(err)
 	}
 
@@ -96,6 +114,7 @@ func read(context *cli.Context) {
 
 	reader, err := factory.CreateReader(config.ReaderType)
 	if err != nil {
+		cli.ShowAppHelp(context)
 		panic(err)
 	}
 
@@ -119,10 +138,30 @@ func initLogs(context *cli.Context) {
 }
 
 func config(context *cli.Context) factory.Config {
-	config, err := factory.LoadFromFile(context.GlobalString("config"))
+	configPath := context.GlobalString("config")
+	var config factory.Config
+	var err error
+	if configPath == "" {
+		config, err = factory.Parse([]byte("{}"))
+	} else {
+		config, err = factory.LoadFromFile(configPath)
+	}
 	if err != nil {
 		cli.ShowAppHelp(context)
 		panic(err)
+	}
+
+	schemeType := context.GlobalString("scheme")
+	if schemeType != "" {
+		config.SchemeType = schemeType
+	}
+	writerType := context.GlobalString("writer")
+	if writerType != "" {
+		config.WriterType = writerType
+	}
+	readerType := context.GlobalString("reader")
+	if readerType != "" {
+		config.ReaderType = readerType
 	}
 
 	for _, assignment := range context.GlobalStringSlice("config-string") {
@@ -162,6 +201,7 @@ func parseAssignment(assignment string) ([]string, error) {
 func scheme(config factory.Config, context *cli.Context) factory.Scheme {
 	scheme, err := factory.CreateScheme(config.SchemeType)
 	if err != nil {
+		cli.ShowAppHelp(context)
 		panic(err)
 	}
 
