@@ -21,12 +21,6 @@ const (
 
 	WarmupMessagesPerRun = prefix + "warmup-messages-per-run"
 	WarmupWait           = prefix + "warmup-wait"
-
-	reportPrefix      = prefix + "report-flags."
-	DefaultReport     = reportPrefix + "default"
-	LessThanReport    = reportPrefix + "less-than"
-	ErrorReport       = reportPrefix + "error"
-	GreaterThanReport = reportPrefix + "greater-than"
 )
 
 type Scheme struct {
@@ -42,11 +36,6 @@ type Scheme struct {
 
 	warmupMessagesPerRun int
 	warmupWait           time.Duration
-
-	defaultReport     string
-	lessThanReport    string
-	errorReport       string
-	greaterThanReport string
 }
 
 func (s *Scheme) Init(config jsonstruct.JSONStruct) error {
@@ -73,11 +62,6 @@ func (s *Scheme) Init(config jsonstruct.JSONStruct) error {
 	if err != nil {
 		return err
 	}
-
-	s.defaultReport = config.StringWithDefault(DefaultReport, ".")
-	s.lessThanReport = config.StringWithDefault(LessThanReport, "<")
-	s.errorReport = config.StringWithDefault(ErrorReport, "#")
-	s.greaterThanReport = config.StringWithDefault(GreaterThanReport, ">")
 
 	return nil
 }
@@ -107,6 +91,10 @@ func (s *Scheme) RunTime() time.Duration {
 }
 
 func (s *Scheme) RunWriter(writer factory.Writer) {
+	if s.warmupMessagesPerRun > 0 {
+		logs.Logger.Info("Writing %d warmup messages", s.warmupMessagesPerRun)
+	}
+
 	for i := 0; i < s.warmupMessagesPerRun; i++ {
 		writer.Write(s.buffer)
 	}
@@ -115,11 +103,13 @@ func (s *Scheme) RunWriter(writer factory.Writer) {
 		time.Sleep(s.warmupWait)
 	}
 
+	logs.Logger.Info("Starting writing %d messages...", s.messagesPerRun)
 	startTime := time.Now()
 	for i := 0; i < s.messagesPerRun; i++ {
 		s.countMessage(writer.Write(s.buffer))
 	}
 	s.runTime = time.Now().Sub(startTime)
+	logs.Logger.Info("Finished.")
 
 	err := writer.Close()
 	if err != nil {
@@ -147,12 +137,17 @@ func (s *Scheme) RunReader(reader factory.Reader) {
 }
 
 func (s *Scheme) runReader(reader factory.Reader, timer *time.Timer) {
+	if s.warmupMessagesPerRun > 0 {
+		logs.Logger.Info("Reading %d warmup messages", s.warmupMessagesPerRun)
+	}
+
 	var startTime, lastMessageTime time.Time
 	buffer := make([]byte, s.bytesPerMessage*2)
 	for i := 0; i < s.warmupMessagesPerRun; i++ {
 		reader.Read(buffer)
 	}
 
+	logs.Logger.Info("Starting reading %d messages...", s.messagesPerRun)
 	for {
 		count, err := reader.Read(buffer)
 		if err == io.EOF {
@@ -168,6 +163,7 @@ func (s *Scheme) runReader(reader factory.Reader, timer *time.Timer) {
 
 		s.countMessage(count, err)
 	}
+	logs.Logger.Info("Finished.")
 
 	s.runTime = lastMessageTime.Sub(startTime)
 }
@@ -179,15 +175,5 @@ func (s *Scheme) countMessage(count int, err error) {
 		if s.firstError == nil {
 			s.firstError = err
 		}
-	}
-	switch {
-	case err != nil:
-		fmt.Print(s.errorReport)
-	case count < s.bytesPerMessage:
-		fmt.Print(s.lessThanReport)
-	case count > s.bytesPerMessage:
-		fmt.Print(s.greaterThanReport)
-	default:
-		fmt.Print(s.defaultReport)
 	}
 }

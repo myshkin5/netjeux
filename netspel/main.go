@@ -8,12 +8,12 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
+	"github.com/myshkin5/netspel/adapters/sse"
 	"github.com/myshkin5/netspel/adapters/udp"
 	"github.com/myshkin5/netspel/factory"
 	"github.com/myshkin5/netspel/logs"
 	"github.com/myshkin5/netspel/schemes/simple"
 	"github.com/op/go-logging"
-	"github.com/myshkin5/netspel/adapters/sse"
 )
 
 func init() {

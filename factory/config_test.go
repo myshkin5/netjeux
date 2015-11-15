@@ -43,31 +43,4 @@ var _ = Describe("Config", func() {
 		value := this.(string)
 		Expect(value).To(Equal("that"))
 	})
-
-	It("returns an error when the writer type isn't specified", func() {
-		_, err := factory.Parse([]byte(`{
-			"scheme-type": "SomeNeatScheme",
-			"reader-type": "SomeNeatReader"
-		}`))
-
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("returns an error when the reader type isn't specified", func() {
-		_, err := factory.Parse([]byte(`{
-			"scheme-type": "SomeNeatScheme",
-			"writer-type": "SomeNeatWriter"
-		}`))
-
-		Expect(err).To(HaveOccurred())
-	})
-
-	It("returns an error when the scheme type isn't specified", func() {
-		_, err := factory.Parse([]byte(`{
-			"writer-type": "SomeNeatWriter",
-			"reader-type": "SomeNeatReader"
-		}`))
-
-		Expect(err).To(HaveOccurred())
-	})
 })

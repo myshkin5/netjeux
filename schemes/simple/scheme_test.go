@@ -29,10 +29,6 @@ var _ = Describe("Scheme", func() {
 		config.SetInt(simple.BytesPerMessage, 1000)
 		config.SetInt(simple.MessagesPerRun, 100)
 		config.SetString(simple.WaitForLastMessage, "100ms")
-		config.SetString(simple.DefaultReport, "")
-		config.SetString(simple.LessThanReport, "")
-		config.SetString(simple.ErrorReport, "")
-		config.SetString(simple.GreaterThanReport, "")
 	})
 
 	Context("with a short wait time", func() {
