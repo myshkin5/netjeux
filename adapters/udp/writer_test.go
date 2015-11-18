@@ -33,7 +33,7 @@ var _ = Describe("Writer", func() {
 
 		config := jsonstruct.New()
 		config.SetInt(udp.Port, 51041)
-		config.SetString(udp.RemoteAddr, "localhost")
+		config.SetString(udp.RemoteReaderAddr, "localhost")
 
 		writer := udp.Writer{}
 		err = writer.Init(config)

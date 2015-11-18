@@ -11,8 +11,8 @@ import (
 const (
 	prefix = "udp."
 
-	RemoteAddr = prefix + "remote-addr"
-	Port       = prefix + "port"
+	RemoteReaderAddr = prefix + "remote-reader-addr"
+	Port             = prefix + "port"
 )
 
 type Writer struct {
@@ -20,9 +20,9 @@ type Writer struct {
 }
 
 func (w *Writer) Init(config jsonstruct.JSONStruct) error {
-	remoteAddr, ok := config.String(RemoteAddr)
+	remoteAddr, ok := config.String(RemoteReaderAddr)
 	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", RemoteAddr)
+		return fmt.Errorf("%s must be specified in the config additional section", RemoteReaderAddr)
 	}
 
 	port, ok := config.Int(Port)

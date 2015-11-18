@@ -60,7 +60,7 @@ var _ = Describe("Reader", func() {
 		time.Sleep(50 * time.Millisecond)
 
 		config = jsonstruct.New()
-		config.SetString(sse.RemoteAddr, "localhost")
+		config.SetString(sse.RemoteWriterAddr, "localhost")
 		config.SetInt(sse.Port, port)
 
 		reader = sse.Reader{}

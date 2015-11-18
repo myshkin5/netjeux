@@ -11,8 +11,8 @@ import (
 const (
 	prefix = "sse."
 
-	RemoteAddr = prefix + "remote-addr"
-	Port       = prefix + "port"
+	RemoteWriterAddr = prefix + "remote-writer-addr"
+	Port             = prefix + "port"
 )
 
 type Reader struct {
@@ -25,9 +25,9 @@ func (r *Reader) Init(config jsonstruct.JSONStruct) error {
 		return fmt.Errorf("%s must be specified in the config additional section", Port)
 	}
 
-	remoteAddr, ok := config.String(RemoteAddr)
+	remoteAddr, ok := config.String(RemoteWriterAddr)
 	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", RemoteAddr)
+		return fmt.Errorf("%s must be specified in the config additional section", RemoteWriterAddr)
 	}
 
 	resp, err := http.DefaultClient.Get(fmt.Sprintf("http://%s:%d/", remoteAddr, port))

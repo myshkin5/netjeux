@@ -10,7 +10,7 @@
     },
     "udp": {
       "port": 46354,
-      "remote-addr": "localhost"
+      "remote-reader-addr": "localhost"
     }
   }
 }
