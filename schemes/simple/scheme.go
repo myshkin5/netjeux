@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"io"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/myshkin5/netspel/factory"
 	"github.com/myshkin5/netspel/jsonstruct"
 	"github.com/myshkin5/netspel/logs"
+	"github.com/myshkin5/netspel/utils"
 )
 
 const (
@@ -66,20 +66,12 @@ func (s *Scheme) Init(config jsonstruct.JSONStruct) error {
 	return nil
 }
 
-func (s *Scheme) BytesPerMessage() int {
-	return s.bytesPerMessage
-}
-
-func (s *Scheme) MessagesPerRun() int {
-	return s.messagesPerRun
-}
-
 func (s *Scheme) ByteCount() uint64 {
-	return atomic.LoadUint64(&s.byteCount)
+	return s.byteCount
 }
 
 func (s *Scheme) ErrorCount() uint32 {
-	return atomic.LoadUint32(&s.errorCount)
+	return s.errorCount
 }
 
 func (s *Scheme) FirstError() error {
@@ -115,6 +107,8 @@ func (s *Scheme) RunWriter(writer factory.Writer) {
 	if err != nil {
 		logs.Logger.Warning("Error closing writer, %s", err.Error())
 	}
+
+	s.outputReport()
 }
 
 func (s *Scheme) RunReader(reader factory.Reader) {
@@ -134,6 +128,8 @@ func (s *Scheme) RunReader(reader factory.Reader) {
 	}
 
 	wg.Wait()
+
+	s.outputReport()
 }
 
 func (s *Scheme) runReader(reader factory.Reader, timer *time.Timer) {
@@ -169,11 +165,24 @@ func (s *Scheme) runReader(reader factory.Reader, timer *time.Timer) {
 }
 
 func (s *Scheme) countMessage(count int, err error) {
-	atomic.AddUint64(&s.byteCount, uint64(count))
+	s.byteCount += uint64(count)
 	if err != nil {
-		atomic.AddUint32(&s.errorCount, 1)
+		s.errorCount++
 		if s.firstError == nil {
 			s.firstError = err
 		}
+	}
+}
+
+func (s *Scheme) outputReport() {
+	bytesPerSec := utils.ByteSize(s.ByteCount()) * utils.ByteSize(time.Second) / utils.ByteSize(s.RunTime().Nanoseconds())
+	messagesPerSec := float64(s.messagesPerRun) * float64(time.Second) / float64(s.RunTime().Nanoseconds())
+
+	logs.Logger.Info("Byte count: %d", s.ByteCount())
+	logs.Logger.Info("Rates: %s/s %.1f messages/s", bytesPerSec.String(), messagesPerSec)
+	logs.Logger.Info("Error count: %d", s.ErrorCount())
+	logs.Logger.Info("Run time: %s", s.RunTime().String())
+	if s.FirstError() != nil {
+		logs.Logger.Info("First error: %s", s.FirstError().Error())
 	}
 }

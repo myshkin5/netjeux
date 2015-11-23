@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/codegangsta/cli"
 	"github.com/myshkin5/netspel/adapters/sse"
@@ -13,6 +12,7 @@ import (
 	"github.com/myshkin5/netspel/factory"
 	"github.com/myshkin5/netspel/logs"
 	"github.com/myshkin5/netspel/schemes/simple"
+	"github.com/myshkin5/netspel/schemes/streaming"
 	"github.com/op/go-logging"
 )
 
@@ -24,6 +24,7 @@ func init() {
 	factory.ReaderManager.RegisterType("netspel.adapters.sse.Reader", reflect.TypeOf(sse.Reader{}))
 
 	factory.SchemeManager.RegisterType("netspel.schemes.simple.Scheme", reflect.TypeOf(simple.Scheme{}))
+	factory.SchemeManager.RegisterType("netspel.schemes.streaming.Scheme", reflect.TypeOf(streaming.Scheme{}))
 }
 
 func main() {
@@ -102,8 +103,6 @@ func write(context *cli.Context) {
 	}
 
 	scheme.RunWriter(writer)
-
-	outputReport(scheme)
 }
 
 func read(context *cli.Context) {
@@ -124,8 +123,6 @@ func read(context *cli.Context) {
 	}
 
 	scheme.RunReader(reader)
-
-	outputReport(scheme)
 }
 
 func initLogs(context *cli.Context) {
@@ -211,17 +208,4 @@ func scheme(config factory.Config, context *cli.Context) factory.Scheme {
 	}
 
 	return scheme
-}
-
-func outputReport(scheme factory.Scheme) {
-	bytesPerSec := ByteSize(scheme.ByteCount()) * ByteSize(time.Second) / ByteSize(scheme.RunTime().Nanoseconds())
-	messagesPerSec := float64(scheme.MessagesPerRun()) * float64(time.Second) / float64(scheme.RunTime().Nanoseconds())
-
-	fmt.Printf("\n\nByte count: %d\n", scheme.ByteCount())
-	fmt.Printf("Rates: %s/s %.1f messages/s\n", bytesPerSec.String(), messagesPerSec)
-	fmt.Printf("Error count: %d\n", scheme.ErrorCount())
-	fmt.Printf("Run time: %s\n", scheme.RunTime().String())
-	if scheme.FirstError() != nil {
-		fmt.Printf("First error: %s\n", scheme.FirstError().Error())
-	}
 }

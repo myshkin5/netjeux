@@ -38,11 +38,6 @@ var _ = Describe("Scheme", func() {
 			Expect(err).NotTo(HaveOccurred())
 		})
 
-		It("returns the values it is configured with", func() {
-			Expect(scheme.BytesPerMessage()).To(Equal(1000))
-			Expect(scheme.MessagesPerRun()).To(Equal(100))
-		})
-
 		It("writes messages to a writer", func() {
 			wg := sync.WaitGroup{}
 			wg.Add(1)
@@ -72,8 +67,8 @@ var _ = Describe("Scheme", func() {
 
 			scheme.RunReader(reader)
 
-			Eventually(scheme.ByteCount).Should(BeEquivalentTo(1010))
-			Eventually(scheme.ErrorCount).Should(BeEquivalentTo(1))
+			Expect(scheme.ByteCount()).To(BeEquivalentTo(1010))
+			Expect(scheme.ErrorCount()).To(BeEquivalentTo(1))
 			Expect(scheme.RunTime()).To(BeNumerically(">", time.Duration(0)))
 			Expect(scheme.FirstError()).To(Equal(firstError))
 		})

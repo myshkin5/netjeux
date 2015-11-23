@@ -137,38 +137,46 @@ var _ = Describe("Writer", func() {
 		Expect(err).NotTo(HaveOccurred())
 	})
 
-	It("returns an error when the reader closes early", func() {
-		message := make([]byte, 1024)
-		done := make(chan struct{})
-		go func() {
-			defer GinkgoRecover()
+	It("can be reconnected after a reader completes and closes the connection", func() {
+		mCount := 0
 
-			for i := 0; i < 1000; i++ {
+		readWrite := func() {
+			message := make([]byte, 1024)
+			done := make(chan struct{})
+			go func() {
+				defer GinkgoRecover()
+				message[0] = byte(mCount)
+				mCount++
 				count, err := writer.Write(message)
-				if err != nil {
-					break
-				}
+				Expect(err).NotTo(HaveOccurred())
 				Expect(count).To(Equal(1024))
-			}
 
-			err := writer.Close()
+				close(done)
+			}()
+
+			resp, err := http.Get(fmt.Sprintf("http://localhost:%d", port))
 			Expect(err).NotTo(HaveOccurred())
 
-			close(done)
-		}()
+			reader := vitosse.NewReadCloser(resp.Body)
 
-		resp, err := http.Get(fmt.Sprintf("http://localhost:%d", port))
+			event, err := reader.Next()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(event.Data).To(Equal(message))
+
+			err = reader.Close()
+			Expect(err).NotTo(HaveOccurred())
+
+			Eventually(done).Should(BeClosed())
+		}
+
+		readWrite()
+
+		// Need the first request to close before we write another message
+		time.Sleep(100 * time.Millisecond)
+
+		readWrite()
+
+		err := writer.Close()
 		Expect(err).NotTo(HaveOccurred())
-
-		reader := vitosse.NewReadCloser(resp.Body)
-
-		event, err := reader.Next()
-		Expect(err).NotTo(HaveOccurred())
-		Expect(event.Data).To(Equal(message))
-
-		err = reader.Close()
-		Expect(err).NotTo(HaveOccurred())
-
-		Eventually(done).Should(BeClosed())
 	})
 })

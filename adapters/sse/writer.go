@@ -83,17 +83,28 @@ func (w *Writer) handle(rw http.ResponseWriter, r *http.Request) {
 	flusher := rw.(http.Flusher)
 	flusher.Flush()
 
-	for message := range w.messages {
-		event := vitosse.Event{
-			Data: message,
-		}
+	closeNotifier := rw.(http.CloseNotifier).CloseNotify()
 
-		err := event.Write(rw)
-		flusher.Flush()
+	for {
+		select {
+		case <-closeNotifier:
+			return
+		case message, ok := <-w.messages:
+			if !ok {
+				return
+			}
 
-		w.responses <- response{
-			count: len(message),
-			err:   err,
+			event := vitosse.Event{
+				Data: message,
+			}
+
+			err := event.Write(rw)
+			flusher.Flush()
+
+			w.responses <- response{
+				count: len(message),
+				err:   err,
+			}
 		}
 	}
 }
