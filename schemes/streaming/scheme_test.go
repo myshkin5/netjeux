@@ -6,6 +6,7 @@ import (
 	"github.com/myshkin5/netspel/schemes/streaming"
 
 	"time"
+	"sync"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -24,46 +25,95 @@ var _ = Describe("Scheme", func() {
 		reader = mocks.NewMockReader()
 		scheme = &streaming.Scheme{}
 		config = jsonstruct.New()
-		config.SetInt(streaming.MessagesPerSecond, 5)
 		config.SetInt(streaming.BytesPerMessage, 1000)
-
-		err := scheme.Init(config)
-		Expect(err).NotTo(HaveOccurred())
 	})
 
-	It("returns the values it is configured with", func() {
-		Expect(scheme.MessagesPerSecond()).To(Equal(5))
-		Expect(scheme.BytesPerMessage()).To(Equal(1000))
+	Context("with a 5-messages-per-second configuration", func() {
+		BeforeEach(func() {
+			config.SetInt(streaming.MessagesPerSecond, 5)
+
+			err := scheme.Init(config)
+			Expect(err).NotTo(HaveOccurred())
+		})
+
+		It("writes messages at the rate specified", func() {
+			go scheme.RunWriter(writer)
+
+			time.Sleep(500 * time.Millisecond)
+			Expect(scheme.ByteCount()).To(BeNumerically(">", 1000))
+
+			time.Sleep(600 * time.Millisecond)
+			Expect(scheme.ByteCount()).To(BeNumerically("<=", 1000))
+			scheme.Close()
+
+			Expect(len(writer.Messages)).To(BeNumerically(">=", 4))
+			Expect(len(writer.Messages)).To(BeNumerically("<=", 6))
+		})
+
+		It("reads messages at the rate specified", func() {
+			for i := 0; i < 10; i++ {
+				reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 1000), Error: nil}
+			}
+
+			go scheme.RunReader(reader)
+
+			time.Sleep(500 * time.Millisecond)
+			Expect(scheme.ByteCount()).To(BeNumerically(">", 1000))
+
+			time.Sleep(600 * time.Millisecond)
+			Expect(scheme.ByteCount()).To(BeNumerically("<=", 1000))
+			scheme.Close()
+
+			Expect(len(reader.ReadMessages)).To(BeNumerically(">=", 4))
+			Expect(len(reader.ReadMessages)).To(BeNumerically("<=", 6))
+		})
 	})
 
-	It("writes messages at the rate specified", func() {
-		go scheme.RunWriter(writer)
+	Context("with a zero-messages-per-second (infinite) configuration", func() {
+		BeforeEach(func() {
+			config.SetInt(streaming.MessagesPerSecond, 0)
 
-		time.Sleep(500 * time.Millisecond)
-		Expect(scheme.ByteCount()).To(BeNumerically(">", 1000))
+			err := scheme.Init(config)
+			Expect(err).NotTo(HaveOccurred())
+		})
 
-		time.Sleep(600 * time.Millisecond)
-		Expect(scheme.ByteCount()).To(BeNumerically("<=", 1000))
-		scheme.Close()
+		It("reads messages as quickly as possible", func() {
+			reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 10), Error: nil}
+			reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 1000), Error: nil}
 
-		Expect(len(writer.Messages)).To(BeNumerically(">=", 4))
-		Expect(len(writer.Messages)).To(BeNumerically("<=", 6))
-	})
+			go scheme.RunReader(reader)
 
-	It("reads messages as quickly as possible", func() {
-		reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 10), Error: nil}
-		reader.ReadMessages <- mocks.ReadMessage{Buffer: make([]byte, 1000), Error: nil}
+			time.Sleep(100 * time.Millisecond)
+			Expect(scheme.ByteCount()).To(BeEquivalentTo(1010))
 
-		go scheme.RunReader(reader)
+			time.Sleep(time.Second)
+			Expect(scheme.ByteCount()).To(BeEquivalentTo(0))
 
-		time.Sleep(100 * time.Millisecond)
-		Expect(scheme.ByteCount()).To(BeEquivalentTo(1010))
+			scheme.Close()
 
-		time.Sleep(time.Second)
-		Expect(scheme.ByteCount()).To(BeEquivalentTo(0))
+			Expect(reader.ReadMessages).To(BeEmpty())
+		})
 
-		scheme.Close()
+		It("writes messages as quickly as possible", func() {
+			go scheme.RunWriter(writer)
 
-		Expect(reader.ReadMessages).To(BeEmpty())
+			time.Sleep(100 * time.Millisecond)
+			Expect(scheme.ByteCount()).To(BeEquivalentTo(10000000))
+
+			time.Sleep(time.Second)
+			Expect(scheme.ByteCount()).To(BeEquivalentTo(0))
+
+			var wg sync.WaitGroup
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				scheme.Close()
+			}()
+
+			time.Sleep(100 * time.Millisecond)
+			<-writer.Messages
+
+			wg.Wait()
+		})
 	})
 })

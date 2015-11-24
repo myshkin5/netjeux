@@ -42,19 +42,13 @@ func (s *Scheme) Init(config jsonstruct.JSONStruct) error {
 	s.bytesPerMessage = config.IntWithDefault(BytesPerMessage, DefaultBytesPerMessage)
 
 	s.buffer = make([]byte, s.bytesPerMessage)
-	s.tickerTime = time.Second / time.Duration(s.messagesPerSecond)
+	if s.messagesPerSecond > 0 {
+		s.tickerTime = time.Second / time.Duration(s.messagesPerSecond)
+	}
 
 	s.done.Add(1)
 
 	return nil
-}
-
-func (s *Scheme) BytesPerMessage() int {
-	return s.bytesPerMessage
-}
-
-func (s *Scheme) MessagesPerSecond() int {
-	return s.messagesPerSecond
 }
 
 func (s *Scheme) MessageCount() uint32 {
@@ -74,11 +68,17 @@ func (s *Scheme) RunWriter(writer factory.Writer) {
 	defer s.done.Done()
 	s.startReporter()
 
-	ticker := time.NewTicker(s.tickerTime)
-	defer ticker.Stop()
+	var ticker *time.Ticker
+	if s.tickerTime > 0 {
+		ticker = time.NewTicker(s.tickerTime)
+		defer ticker.Stop()
+	}
 
 	for {
-		<-ticker.C
+		if ticker != nil {
+			<-ticker.C
+		}
+
 		if s.isClosed() {
 			break
 		}
@@ -95,7 +95,17 @@ func (s *Scheme) RunReader(reader factory.Reader) {
 
 	buffer := make([]byte, s.bytesPerMessage*2)
 
+	var ticker *time.Ticker
+	if s.tickerTime > 0 {
+		ticker = time.NewTicker(s.tickerTime)
+		defer ticker.Stop()
+	}
+
 	for {
+		if ticker != nil {
+			<-ticker.C
+		}
+
 		if s.isClosed() {
 			break
 		}
@@ -150,7 +160,8 @@ func (s *Scheme) startReporter() {
 			messageCount := atomic.SwapUint32(&s.messageCount, 0)
 			byteCount := atomic.SwapUint64(&s.byteCount, 0)
 			errorCount := atomic.SwapUint32(&s.errorCount, 0)
-			logs.Logger.Info("Message count: %7d, Error count: %7d, Byte count: %s", messageCount, errorCount, utils.ByteSize(byteCount).String())
+			percent := float32(messageCount) / float32(s.messagesPerSecond) * 100.0
+			logs.Logger.Info("Message count: %7d (%6.2f%%), Error count: %7d, Byte count: %s", messageCount, percent, errorCount, utils.ByteSize(byteCount).String())
 		}
 	}()
 }
