@@ -12,9 +12,9 @@ var _ = Describe("Config", func() {
 		config, err := factory.LoadFromFile("./simple.json")
 
 		Expect(err).NotTo(HaveOccurred())
-		Expect(config.WriterType).To(Equal("netspel.adapters.udp.Writer"))
-		Expect(config.ReaderType).To(Equal("netspel.adapters.udp.Reader"))
-		Expect(config.SchemeType).To(Equal("netspel.schemes.simple.Scheme"))
+		Expect(config.WriterType).To(Equal("udp"))
+		Expect(config.ReaderType).To(Equal("udp"))
+		Expect(config.SchemeType).To(Equal("simple"))
 	})
 
 	It("returns an error when attempting to load a non-existent file", func() {

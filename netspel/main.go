@@ -17,14 +17,14 @@ import (
 )
 
 func init() {
-	factory.WriterManager.RegisterType("netspel.adapters.udp.Writer", reflect.TypeOf(udp.Writer{}))
-	factory.ReaderManager.RegisterType("netspel.adapters.udp.Reader", reflect.TypeOf(udp.Reader{}))
+	factory.WriterManager.RegisterType("udp", reflect.TypeOf(udp.Writer{}))
+	factory.ReaderManager.RegisterType("udp", reflect.TypeOf(udp.Reader{}))
 
-	factory.WriterManager.RegisterType("netspel.adapters.sse.Writer", reflect.TypeOf(sse.Writer{}))
-	factory.ReaderManager.RegisterType("netspel.adapters.sse.Reader", reflect.TypeOf(sse.Reader{}))
+	factory.WriterManager.RegisterType("sse", reflect.TypeOf(sse.Writer{}))
+	factory.ReaderManager.RegisterType("sse", reflect.TypeOf(sse.Reader{}))
 
-	factory.SchemeManager.RegisterType("netspel.schemes.simple.Scheme", reflect.TypeOf(simple.Scheme{}))
-	factory.SchemeManager.RegisterType("netspel.schemes.streaming.Scheme", reflect.TypeOf(streaming.Scheme{}))
+	factory.SchemeManager.RegisterType("simple", reflect.TypeOf(simple.Scheme{}))
+	factory.SchemeManager.RegisterType("streaming", reflect.TypeOf(streaming.Scheme{}))
 }
 
 func main() {

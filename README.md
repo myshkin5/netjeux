@@ -49,7 +49,8 @@ Schemes orchestrate a run without any coupling to a specific protocol. Schemes c
 
  Type | Description
  ---|---
- [`netspel.schemes.simple.Scheme`](schemes/simple) | The simplest scheme available. 
+ [`simple`](schemes/simple) | The simplest scheme available.
+ [`streaming`](schemes/streaming) | The Streaming scheme continuously streams messages at a specific rate.
 
 ## Adapters
 
@@ -59,12 +60,12 @@ Adapters allow schemes to read and write using a specific network protocol.
 
  Type | Protocol
  ---|---
- [`netspel.adapters.udp.Writer`](adapters/udp) | [User Datagram Protocol](https://en.wikipedia.org/wiki/User_Datagram_Protocol)
- [`netspel.adapters.sse.Writer`](adapters/sse) | [Server-Sent Events](https://en.wikipedia.org/wiki/Server-sent_events)
+ [`udp`](adapters/udp) | [User Datagram Protocol](https://en.wikipedia.org/wiki/User_Datagram_Protocol)
+ [`sse`](adapters/sse) | [Server-Sent Events](https://en.wikipedia.org/wiki/Server-sent_events)
 
 ### Existing Adapter Readers
 
  Type | Protocol
  ---|---
- [`netspel.adapters.udp.Reader`](adapters/udp) | [User Datagram Protocol](https://en.wikipedia.org/wiki/User_Datagram_Protocol)
- [`netspel.adapters.sse.Reader`](adapters/sse) | [Server-Sent Events](https://en.wikipedia.org/wiki/Server-sent_events)
+ [`udp`](adapters/udp) | [User Datagram Protocol](https://en.wikipedia.org/wiki/User_Datagram_Protocol)
+ [`sse`](adapters/sse) | [Server-Sent Events](https://en.wikipedia.org/wiki/Server-sent_events)

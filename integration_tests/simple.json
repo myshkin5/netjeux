@@ -1,7 +1,7 @@
 {
-  "scheme-type": "netspel.schemes.simple.Scheme",
-  "writer-type": "netspel.adapters.udp.Writer",
-  "reader-type": "netspel.adapters.udp.Reader",
+  "scheme-type": "simple",
+  "writer-type": "udp",
+  "reader-type": "udp",
   "additional": {
     "simple": {
       "bytes-per-message": 100,
