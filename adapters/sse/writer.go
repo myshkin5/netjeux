@@ -24,15 +24,12 @@ type response struct {
 }
 
 func (w *Writer) Init(config jsonstruct.JSONStruct) error {
-	port, ok := config.Int(Port)
-	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", Port)
-	}
-
+	port := config.IntWithDefault(Port, DefaultPort)
 	server := &http.Server{
 		Addr:    fmt.Sprintf("localhost:%d", port),
 		Handler: http.HandlerFunc(w.handle),
 	}
+
 	go func() {
 		err := server.ListenAndServe()
 		if err != nil {

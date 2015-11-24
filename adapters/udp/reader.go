@@ -13,11 +13,7 @@ type Reader struct {
 }
 
 func (r *Reader) Init(config jsonstruct.JSONStruct) error {
-	port, ok := config.Int(Port)
-	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", Port)
-	}
-
+	port := config.IntWithDefault(Port, DefaultPort)
 	laddr, err := net.ResolveUDPAddr("udp4", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return err

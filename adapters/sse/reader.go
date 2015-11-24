@@ -11,8 +11,11 @@ import (
 const (
 	prefix = "sse."
 
-	RemoteWriterAddr = prefix + "remote-writer-addr"
 	Port             = prefix + "port"
+	RemoteWriterAddr = prefix + "remote-writer-addr"
+
+	DefaultPort             = 38208
+	DefaultRemoteWriterAddr = "localhost"
 )
 
 type Reader struct {
@@ -20,16 +23,8 @@ type Reader struct {
 }
 
 func (r *Reader) Init(config jsonstruct.JSONStruct) error {
-	port, ok := config.Int(Port)
-	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", Port)
-	}
-
-	remoteAddr, ok := config.String(RemoteWriterAddr)
-	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", RemoteWriterAddr)
-	}
-
+	port := config.IntWithDefault(Port, DefaultPort)
+	remoteAddr := config.StringWithDefault(RemoteWriterAddr, DefaultRemoteWriterAddr)
 	resp, err := http.DefaultClient.Get(fmt.Sprintf("http://%s:%d/", remoteAddr, port))
 	if err != nil {
 		return err

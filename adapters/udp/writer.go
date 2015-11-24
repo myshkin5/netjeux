@@ -1,7 +1,6 @@
 package udp
 
 import (
-	"fmt"
 	"net"
 	"strconv"
 
@@ -11,8 +10,11 @@ import (
 const (
 	prefix = "udp."
 
-	RemoteReaderAddr = prefix + "remote-reader-addr"
 	Port             = prefix + "port"
+	RemoteReaderAddr = prefix + "remote-reader-addr"
+
+	DefaultPort             = 57955
+	DefaultRemoteReaderAddr = "localhost"
 )
 
 type Writer struct {
@@ -20,16 +22,8 @@ type Writer struct {
 }
 
 func (w *Writer) Init(config jsonstruct.JSONStruct) error {
-	remoteAddr, ok := config.String(RemoteReaderAddr)
-	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", RemoteReaderAddr)
-	}
-
-	port, ok := config.Int(Port)
-	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", Port)
-	}
-
+	port := config.IntWithDefault(Port, DefaultPort)
+	remoteAddr := config.StringWithDefault(RemoteReaderAddr, DefaultRemoteReaderAddr)
 	raddr, err := net.ResolveUDPAddr("udp4", net.JoinHostPort(remoteAddr, strconv.Itoa(port)))
 	if err != nil {
 		return err

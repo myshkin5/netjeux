@@ -1,7 +1,6 @@
 package simple
 
 import (
-	"fmt"
 	"io"
 	"sync"
 	"time"
@@ -21,6 +20,13 @@ const (
 
 	WarmupMessagesPerRun = prefix + "warmup-messages-per-run"
 	WarmupWait           = prefix + "warmup-wait"
+
+	DefaultMessagesPerRun     = 10000
+	DefaultBytesPerMessage    = 1024
+	DefaultWaitForLastMessage = 5 * time.Second
+
+	DefaultWarmupMessagesPerRun = 0
+	DefaultWarmupWait           = 5 * time.Second
 )
 
 type Scheme struct {
@@ -39,26 +45,18 @@ type Scheme struct {
 }
 
 func (s *Scheme) Init(config jsonstruct.JSONStruct) error {
-	var ok bool
-	s.bytesPerMessage, ok = config.Int(BytesPerMessage)
-	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", BytesPerMessage)
-	}
+	s.messagesPerRun = config.IntWithDefault(MessagesPerRun, DefaultMessagesPerRun)
+	s.bytesPerMessage = config.IntWithDefault(BytesPerMessage, DefaultBytesPerMessage)
 	s.buffer = make([]byte, s.bytesPerMessage)
 
-	s.messagesPerRun, ok = config.Int(MessagesPerRun)
-	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", MessagesPerRun)
-	}
-
 	var err error
-	s.waitForLastMessage, err = config.DurationWithDefault(WaitForLastMessage, 5*time.Second)
+	s.waitForLastMessage, err = config.DurationWithDefault(WaitForLastMessage, DefaultWaitForLastMessage)
 	if err != nil {
 		return err
 	}
 
-	s.warmupMessagesPerRun = config.IntWithDefault(WarmupMessagesPerRun, 0)
-	s.warmupWait, err = config.DurationWithDefault(WarmupWait, 5*time.Second)
+	s.warmupMessagesPerRun = config.IntWithDefault(WarmupMessagesPerRun, DefaultWarmupMessagesPerRun)
+	s.warmupWait, err = config.DurationWithDefault(WarmupWait, DefaultWarmupWait)
 	if err != nil {
 		return err
 	}

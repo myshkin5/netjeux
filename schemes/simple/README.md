@@ -4,13 +4,13 @@ The Simple scheme is the simplest scheme available. The Simple scheme is focused
 
 ## Configuration
 
- Dot path | Type | Description
- ---|---|---
- `simple.messages-per-run` | `int` | The count of message sent to a Writer and expected from a Reader.
- `simple.bytes-per-message` | `int` | The count of bytes per message.
- `simple.wait-for-last-message` | [`time.Duration`](https://golang.org/pkg/time/#ParseDuration) | The time to wait after the last message is read before a run is considered complete. Used only in `read` mode. Default `5s` (5 seconds).
- `simple.warmup-messages-per-run` | `int` | The count of messages used to "warmup" the network channel. A non-zero value is required for some protocols to have accurate timings. For instance pull protocols must send warm up messages so that the `write` mode doesn't start the run before the Reader is ready to read messages.
- `simple.warmup-wait` | [`time.Duration`](https://golang.org/pkg/time/#ParseDuration) | The time to wait after warmup messages are sent before sending actual messages. Default `5s` (5 seconds).
+ Dot path | Type | Required/Default | Description
+ ---|---|---|---
+ `simple.messages-per-run` | `int` | No, `10000` | The count of message sent to a Writer and expected from a Reader.
+ `simple.bytes-per-message` | `int` | No, `1024` | The count of bytes per message.
+ `simple.wait-for-last-message` | No, `5s` (5 seconds) | [`time.Duration`](https://golang.org/pkg/time/#ParseDuration) | The time to wait after the last message is read before a run is considered complete. Used only in `read` mode.
+ `simple.warmup-messages-per-run` | `int` | No, `0` | The count of messages used to "warmup" the network channel. A non-zero value is required for some protocols to have accurate timings. For instance pull protocols must send warm up messages so that the `write` mode doesn't start the run before the Reader is ready to read messages.
+ `simple.warmup-wait` | [`time.Duration`](https://golang.org/pkg/time/#ParseDuration) | No, `5s` (5 seconds) | The time to wait after warmup messages are sent before sending actual messages. If `simple.warmup-messages-per-run` is not configured, the value of `simple.warmup-wait` is ignored.
 
 ### Example JSON Configuration
 

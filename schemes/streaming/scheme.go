@@ -1,7 +1,6 @@
 package streaming
 
 import (
-	"fmt"
 	"io"
 	"sync"
 	"sync/atomic"
@@ -18,6 +17,9 @@ const (
 
 	MessagesPerSecond = prefix + "messages-per-second"
 	BytesPerMessage   = prefix + "bytes-per-message"
+
+	DefaultMessagesPerSecond = 1000
+	DefaultBytesPerMessage   = 1024
 )
 
 type Scheme struct {
@@ -36,18 +38,10 @@ type Scheme struct {
 }
 
 func (s *Scheme) Init(config jsonstruct.JSONStruct) error {
-	var ok bool
-	s.bytesPerMessage, ok = config.Int(BytesPerMessage)
-	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", BytesPerMessage)
-	}
+	s.messagesPerSecond = config.IntWithDefault(MessagesPerSecond, DefaultMessagesPerSecond)
+	s.bytesPerMessage = config.IntWithDefault(BytesPerMessage, DefaultBytesPerMessage)
+
 	s.buffer = make([]byte, s.bytesPerMessage)
-
-	s.messagesPerSecond, ok = config.Int(MessagesPerSecond)
-	if !ok {
-		return fmt.Errorf("%s must be specified in the config additional section", MessagesPerSecond)
-	}
-
 	s.tickerTime = time.Second / time.Duration(s.messagesPerSecond)
 
 	s.done.Add(1)
