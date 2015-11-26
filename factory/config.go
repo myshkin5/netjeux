@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 
-	"github.com/myshkin5/netspel/jsonstruct"
+	"github.com/myshkin5/jsonstruct"
 )
 
 type Config struct {
@@ -32,7 +32,7 @@ func Parse(buffer []byte) (Config, error) {
 	config := Config{}
 	err := json.Unmarshal(buffer, &config)
 	if err != nil {
-		return Config{}, nil
+		return Config{}, err
 	}
 
 	if config.Additional == nil {

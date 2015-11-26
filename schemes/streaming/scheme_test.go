@@ -1,12 +1,12 @@
 package streaming_test
 
 import (
-	"github.com/myshkin5/netspel/jsonstruct"
+	"github.com/myshkin5/jsonstruct"
 	"github.com/myshkin5/netspel/schemes/internal/mocks"
 	"github.com/myshkin5/netspel/schemes/streaming"
 
-	"time"
 	"sync"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

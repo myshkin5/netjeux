@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/myshkin5/jsonstruct"
 	"github.com/myshkin5/netspel/adapters/sse"
-	"github.com/myshkin5/netspel/jsonstruct"
 	vitosse "github.com/vito/go-sse/sse"
 
 	. "github.com/onsi/ginkgo"

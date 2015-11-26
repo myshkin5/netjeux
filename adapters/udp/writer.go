@@ -4,7 +4,7 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/myshkin5/netspel/jsonstruct"
+	"github.com/myshkin5/jsonstruct"
 )
 
 const (

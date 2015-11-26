@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/myshkin5/netspel/jsonstruct"
+	"github.com/myshkin5/jsonstruct"
 	vitosse "github.com/vito/go-sse/sse"
 )
 

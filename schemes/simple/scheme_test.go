@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/myshkin5/netspel/jsonstruct"
+	"github.com/myshkin5/jsonstruct"
 	"github.com/myshkin5/netspel/schemes/internal/mocks"
 	"github.com/myshkin5/netspel/schemes/simple"
 

@@ -3,7 +3,7 @@ package mocks
 import (
 	"io"
 
-	"github.com/myshkin5/netspel/jsonstruct"
+	"github.com/myshkin5/jsonstruct"
 )
 
 type ReadMessage struct {

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/myshkin5/netspel/jsonstruct"
+	"github.com/myshkin5/jsonstruct"
 	"github.com/myshkin5/netspel/logs"
 	vitosse "github.com/vito/go-sse/sse"
 )

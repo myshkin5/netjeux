@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/myshkin5/jsonstruct"
 	"github.com/myshkin5/netspel/factory"
-	"github.com/myshkin5/netspel/jsonstruct"
 	"github.com/myshkin5/netspel/logs"
 	"github.com/myshkin5/netspel/utils"
 )

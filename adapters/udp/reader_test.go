@@ -6,8 +6,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/myshkin5/jsonstruct"
 	"github.com/myshkin5/netspel/adapters/udp"
-	"github.com/myshkin5/netspel/jsonstruct"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

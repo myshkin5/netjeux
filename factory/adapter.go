@@ -3,7 +3,7 @@ package factory
 import (
 	"io"
 
-	"github.com/myshkin5/netspel/jsonstruct"
+	"github.com/myshkin5/jsonstruct"
 )
 
 type Writer interface {

@@ -1,6 +1,6 @@
 package mocks
 
-import "github.com/myshkin5/netspel/jsonstruct"
+import "github.com/myshkin5/jsonstruct"
 
 type MockWriter struct {
 	Messages chan []byte
