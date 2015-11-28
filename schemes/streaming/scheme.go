@@ -16,9 +16,11 @@ const (
 	prefix = "streaming."
 
 	MessagesPerSecond = prefix + "messages-per-second"
+	ExpectedMessagesPerSecond = prefix + "expected-messages-per-second"
 	BytesPerMessage   = prefix + "bytes-per-message"
 
 	DefaultMessagesPerSecond = 1000
+	DefaultExpectedMessagesPerSecond = 0
 	DefaultBytesPerMessage   = 1024
 )
 
@@ -29,6 +31,7 @@ type Scheme struct {
 	errorCount   uint32
 
 	messagesPerSecond int
+	expectedMessagesPerSecond int
 	bytesPerMessage   int
 
 	tickerTime time.Duration
@@ -39,7 +42,12 @@ type Scheme struct {
 
 func (s *Scheme) Init(config jsonstruct.JSONStruct) error {
 	s.messagesPerSecond = config.IntWithDefault(MessagesPerSecond, DefaultMessagesPerSecond)
+	s.expectedMessagesPerSecond = config.IntWithDefault(ExpectedMessagesPerSecond, DefaultExpectedMessagesPerSecond)
 	s.bytesPerMessage = config.IntWithDefault(BytesPerMessage, DefaultBytesPerMessage)
+
+	if s.expectedMessagesPerSecond == 0 {
+		s.expectedMessagesPerSecond = s.messagesPerSecond
+	}
 
 	s.buffer = make([]byte, s.bytesPerMessage)
 	if s.messagesPerSecond > 0 {
@@ -160,7 +168,7 @@ func (s *Scheme) startReporter() {
 			messageCount := atomic.SwapUint32(&s.messageCount, 0)
 			byteCount := atomic.SwapUint64(&s.byteCount, 0)
 			errorCount := atomic.SwapUint32(&s.errorCount, 0)
-			percent := float32(messageCount) / float32(s.messagesPerSecond) * 100.0
+			percent := float32(messageCount) / float32(s.expectedMessagesPerSecond) * 100.0
 			logs.Logger.Info("Message count: %7d (%6.2f%%), Error count: %7d, Byte count: %s", messageCount, percent, errorCount, utils.ByteSize(byteCount).String())
 		}
 	}()
