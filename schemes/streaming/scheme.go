@@ -9,19 +9,20 @@ import (
 	"github.com/myshkin5/jsonstruct"
 	"github.com/myshkin5/netspel/factory"
 	"github.com/myshkin5/netspel/logs"
-	"github.com/myshkin5/netspel/utils"
 )
 
 const (
 	prefix = "streaming."
 
-	MessagesPerSecond = prefix + "messages-per-second"
+	MessagesPerSecond         = prefix + "messages-per-second"
 	ExpectedMessagesPerSecond = prefix + "expected-messages-per-second"
-	BytesPerMessage   = prefix + "bytes-per-message"
+	BytesPerMessage           = prefix + "bytes-per-message"
+	ReportCycle               = prefix + "report-cycle"
 
-	DefaultMessagesPerSecond = 1000
+	DefaultMessagesPerSecond         = 1000
 	DefaultExpectedMessagesPerSecond = 0
-	DefaultBytesPerMessage   = 1024
+	DefaultBytesPerMessage           = 1024
+	DefaultReportCycle               = time.Second
 )
 
 type Scheme struct {
@@ -31,22 +32,34 @@ type Scheme struct {
 	errorCount   uint32
 
 	messagesPerSecond int
-	expectedMessagesPerSecond int
 	bytesPerMessage   int
+	reportCycle       time.Duration
 
 	tickerTime time.Duration
 	closed     int32
 	done       sync.WaitGroup
 	closer     io.Closer
+	reporter   Reporter
+}
+
+type Reporter interface {
+	Init(expectedMessagesPerSecond int, reportCycle time.Duration)
+	Report(report Report)
 }
 
 func (s *Scheme) Init(config jsonstruct.JSONStruct) error {
 	s.messagesPerSecond = config.IntWithDefault(MessagesPerSecond, DefaultMessagesPerSecond)
-	s.expectedMessagesPerSecond = config.IntWithDefault(ExpectedMessagesPerSecond, DefaultExpectedMessagesPerSecond)
+	expectedMessagesPerSecond := config.IntWithDefault(ExpectedMessagesPerSecond, DefaultExpectedMessagesPerSecond)
 	s.bytesPerMessage = config.IntWithDefault(BytesPerMessage, DefaultBytesPerMessage)
 
-	if s.expectedMessagesPerSecond == 0 {
-		s.expectedMessagesPerSecond = s.messagesPerSecond
+	var err error
+	s.reportCycle, err = config.DurationWithDefault(ReportCycle, DefaultReportCycle)
+	if err != nil {
+		return err
+	}
+
+	if expectedMessagesPerSecond == 0 {
+		expectedMessagesPerSecond = s.messagesPerSecond
 	}
 
 	s.buffer = make([]byte, s.bytesPerMessage)
@@ -56,19 +69,16 @@ func (s *Scheme) Init(config jsonstruct.JSONStruct) error {
 
 	s.done.Add(1)
 
+	if s.reporter == nil {
+		s.reporter = &ReporterImpl{}
+	}
+	s.reporter.Init(expectedMessagesPerSecond, s.reportCycle)
+
 	return nil
 }
 
-func (s *Scheme) MessageCount() uint32 {
-	return atomic.LoadUint32(&s.messageCount)
-}
-
-func (s *Scheme) ByteCount() uint64 {
-	return atomic.LoadUint64(&s.byteCount)
-}
-
-func (s *Scheme) ErrorCount() uint32 {
-	return atomic.LoadUint32(&s.errorCount)
+func (s *Scheme) SetReporter(reporter Reporter) {
+	s.reporter = reporter
 }
 
 func (s *Scheme) RunWriter(writer factory.Writer) {
@@ -158,18 +168,18 @@ func (s *Scheme) startReporter() {
 	go func() {
 		defer s.done.Done()
 
-		ticker := time.NewTicker(time.Second)
+		ticker := time.NewTicker(s.reportCycle)
 		for {
 			<-ticker.C
 			if s.isClosed() {
 				break
 			}
 
-			messageCount := atomic.SwapUint32(&s.messageCount, 0)
-			byteCount := atomic.SwapUint64(&s.byteCount, 0)
-			errorCount := atomic.SwapUint32(&s.errorCount, 0)
-			percent := float32(messageCount) / float32(s.expectedMessagesPerSecond) * 100.0
-			logs.Logger.Info("Message count: %7d (%6.2f%%), Error count: %7d, Byte count: %s", messageCount, percent, errorCount, utils.ByteSize(byteCount).String())
+			report := Report{}
+			report.MessageCount = atomic.SwapUint32(&s.messageCount, 0)
+			report.ByteCount = atomic.SwapUint64(&s.byteCount, 0)
+			report.ErrorCount = atomic.SwapUint32(&s.errorCount, 0)
+			s.reporter.Report(report)
 		}
 	}()
 }
