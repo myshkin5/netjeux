@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	prefix = "simple."
+	prefix = ".simple."
 
 	MessagesPerRun     = prefix + "messages-per-run"
 	BytesPerMessage    = prefix + "bytes-per-message"

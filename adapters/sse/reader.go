@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	prefix = "sse."
+	prefix = ".sse."
 
 	Port             = prefix + "port"
 	RemoteWriterAddr = prefix + "remote-writer-addr"

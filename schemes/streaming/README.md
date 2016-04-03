@@ -30,7 +30,7 @@ The Streaming scheme continuously streams messages at a specific rate.
 
 ```
 netspel ... \
-    --config-int streaming.messages-per-second=1000 \
-    --config-int streaming.expected-messages-per-second=0 \
-    --config-int streaming.bytes-per-message=1024 \
-    --config-string streaming.report-cycle=1s
+    --config-int    .streaming.messages-per-second=1000 \
+    --config-int    .streaming.expected-messages-per-second=0 \
+    --config-int    .streaming.bytes-per-message=1024 \
+    --config-string .streaming.report-cycle=1s

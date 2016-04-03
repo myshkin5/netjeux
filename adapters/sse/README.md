@@ -24,6 +24,6 @@
 
 ```
 netspel ... \
-    --config-int    sse.port=38208 \
-    --config-string sse.remote-writer-addr=127.0.0.1
+    --config-int    .sse.port=38208 \
+    --config-string .sse.remote-writer-addr=127.0.0.1
 ```

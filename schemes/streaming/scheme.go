@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	prefix = "streaming."
+	prefix = ".streaming."
 
 	MessagesPerSecond         = prefix + "messages-per-second"
 	ExpectedMessagesPerSecond = prefix + "expected-messages-per-second"

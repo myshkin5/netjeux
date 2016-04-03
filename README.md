@@ -39,7 +39,7 @@ Dot paths are specified relative to the additional section. For example, given t
 }
 ```
 
-The port value can be overridden to a value of `12345` using the CLI option `--config-int udp.port=12345`.
+The port value can be overridden to a value of `12345` using the CLI option `--config-int .udp.port=12345`.
 
 ## Schemes
 

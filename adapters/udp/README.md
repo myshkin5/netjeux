@@ -24,6 +24,6 @@
 
 ```
 netspel ... \
-    --config-int    udp.port=57955 \
-    --config-string udp.remote-reader-addr=127.0.0.1
+    --config-int    .udp.port=57955 \
+    --config-string .udp.remote-reader-addr=127.0.0.1
 ```

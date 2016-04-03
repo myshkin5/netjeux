@@ -32,8 +32,8 @@ The Simple scheme is the simplest scheme available. The Simple scheme is focused
 
 ```
 netspel ... \
-    --config-int simple.messages-per-run=10000 \
-    --config-int simple.bytes-per-message=10 \
-    --config-string simple.wait-for-last-message=10s \
-    --config-int simple.warmup-messages-per-run=5 \
-    --config-string simple.warmup-wait=2s
+    --config-int    .simple.messages-per-run=10000 \
+    --config-int    .simple.bytes-per-message=10 \
+    --config-string .simple.wait-for-last-message=10s \
+    --config-int    .simple.warmup-messages-per-run=5 \
+    --config-string .simple.warmup-wait=2s

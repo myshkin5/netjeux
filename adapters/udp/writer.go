@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	prefix = "udp."
+	prefix = ".udp."
 
 	Port             = prefix + "port"
 	RemoteReaderAddr = prefix + "remote-reader-addr"
